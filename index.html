@@ -3176,7 +3176,6 @@ Arcade.register({
         if (front) { g.fillStyle = s === 2 ? (shield ? '#5a4560' : '#b02a45') : s === 3 ? '#3f9b2f' : `hsl(${hue},55%,40%)`; g.beginPath(); for (let k = 0; k <= 6; k++) { const a = a0 + step * k / 6; g.lineTo(cx + Math.cos(a) * R1, cy + Math.sin(a) * R1 * SQ); } for (let k = 6; k >= 0; k--) { const a = a0 + step * k / 6; g.lineTo(cx + Math.cos(a) * R1, cy + Math.sin(a) * R1 * SQ + TH); } g.fill(); }
         // solid discs: inner wall on the far half, end caps where a gap cuts the disc, then the top face
         const side = s === 2 ? (shield ? '#4a3850' : '#8a1f36') : s === 3 ? '#2f7a22' : `hsl(${hue},50%,30%)`;
-        if (!front) { g.fillStyle = side; g.beginPath(); for (let k = 0; k <= 6; k++) { const a = a0 + step * k / 6; g.lineTo(cx + Math.cos(a) * R0, cy + Math.sin(a) * R0 * SQ); } for (let k = 6; k >= 0; k--) { const a = a0 + step * k / 6; g.lineTo(cx + Math.cos(a) * R0, cy + Math.sin(a) * R0 * SQ + TH); } g.fill(); }
         const cap = a => { g.fillStyle = side; g.beginPath(); g.moveTo(cx + Math.cos(a) * R0, cy + Math.sin(a) * R0 * SQ); g.lineTo(cx + Math.cos(a) * R1, cy + Math.sin(a) * R1 * SQ); g.lineTo(cx + Math.cos(a) * R1, cy + Math.sin(a) * R1 * SQ + TH); g.lineTo(cx + Math.cos(a) * R0, cy + Math.sin(a) * R0 * SQ + TH); g.fill(); };
         if (!r.segs[(i + SEG - 1) % SEG]) cap(a0); if (!r.segs[(i + 1) % SEG]) cap(a1);
         g.fillStyle = col; ringPath(cx, cy, a0, a1 + .01, R1, R0); g.fill();
@@ -3193,7 +3192,7 @@ Arcade.register({
       g.save(); g.translate(W / 2, 0); g.scale(sc, sc);
       const vis = rings.filter(r => !r.broken && r.y - cam > -60 && r.y - cam < H / sc + 60);
       vis.forEach(r => drawRing(r, 0, r.y - cam, false));
-      g.fillStyle = '#e6edf2'; g.fillRect(-R0 * .8, -20, R0 * 1.6, H / sc + 40); g.fillStyle = 'rgba(0,0,0,.12)'; g.fillRect(R0 * .2, -20, R0 * .6, H / sc + 40);
+      g.fillStyle = '#e6edf2'; g.fillRect(-R0, -20, R0 * 2, H / sc + 40); g.fillStyle = 'rgba(0,0,0,.12)'; g.fillRect(R0 * .25, -20, R0 * .75, H / sc + 40);   // the pillar fills the discs' hole exactly: no gap that reads as an empty face
       vis.forEach(r => drawRing(r, 0, r.y - cam, true));
       const by = ball.y - cam, bx = 0, brad = 12;
       const hot = streak >= 3 || fire > 0; g.fillStyle = hot ? '#ffb627' : '#fff4e6';
@@ -5487,7 +5486,7 @@ Arcade.register({
       const T = T3; scene = S.scene; cam = S.camera; scene.background = new T.Color(0x2a2230);
       scene.add(new T.HemisphereLight(0xffffff, 0x8a6a4a, .5)); const sun = new T.DirectionalLight(0xfff4e0, 1.25); sun.position.set(-8, 9, 3); scene.add(sun);
       const tray = new T.Mesh(new T.BoxGeometry(SIZE + .8, .6, SIZE + .8), new T.MeshStandardMaterial({ color: 0x5ec8f2, roughness: .5 })); tray.position.y = -.35; scene.add(tray);
-      const table = new T.Mesh(new T.PlaneGeometry(60, 60), new T.MeshStandardMaterial({ color: 0xc8a878, roughness: .9 })); table.rotation.x = -Math.PI / 2; table.position.y = -.66; scene.add(table);
+      const table = new T.Mesh(new T.PlaneGeometry(60, 60), new T.MeshStandardMaterial({ color: 0x5a3e2a, roughness: .9 })); table.rotation.x = -Math.PI / 2; table.position.y = -.66; scene.add(table);
       geo = new T.PlaneGeometry(SIZE, SIZE, N - 1, N - 1); geo.rotateX(-Math.PI / 2); geo.setAttribute('color', new T.BufferAttribute(new Float32Array(N * N * 3), 3));
       mesh = new T.Mesh(geo, new T.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 })); scene.add(mesh);
       fresh(false); ui(); S.say(''); const s0 = api.save.get(); api.save.put({ ...s0, shapes: (s0.shapes || 0) + 1 }); S.loop(step);
@@ -5512,7 +5511,7 @@ Arcade.register({
         for (let k = 0; k < N * N; k++) { pos.setY(k, H[k]); const shade = .9 + Math.min(.12, H[k] * .05); col.setXYZ(k, Cl[k * 3] * shade, Cl[k * 3 + 1] * shade, Cl[k * 3 + 2] * shade); }
         pos.needsUpdate = true; col.needsUpdate = true; geo.computeVertexNormals();
       }
-      cam.position.set(Math.sin(yaw) * 11.5, 12, Math.cos(yaw) * 11.5); cam.lookAt(0, 0, 0);
+      { const vf = cam.fov * Math.PI / 360, hf = Math.atan(Math.tan(vf) * cam.aspect), d = Math.max(14, 7 / Math.tan(hf), 6.5 / Math.tan(vf)); cam.position.set(Math.sin(yaw) * d * .62, d * .78, Math.cos(yaw) * d * .62); cam.lookAt(0, 0, 0); }   // the whole tray fits any screen shape
       S.renderer.render(scene, cam);
     }
     init();
@@ -13487,230 +13486,301 @@ Arcade.register({
 
 </script>
 <script>
-/* Fatateer — Adeni glass marbles (فطاطير) in 3D, with the ring and called-shot games played across the region.
-   Before each game everyone lags (tosses) a marble at the little hole: closest shoots first. A close call gets a hand-span
-   (شبر) measurement. Then:
-   - Ring (taw): everyone puts marbles in the chalk ring; flick your shooter from the ring line to knock them out. Every
-     marble you knock out is yours, and while you keep scoring you keep shooting.
-   - Hole: sink your shooter in the hole to become a hunter (qaza'), then hit the other shooters to knock them out.
-   - Called shot (kanche): the next player calls a target marble; hit THAT one first to win it, hit another first and you
-     lose one of yours back to the pile.
-   Physics: rolling glass spheres on a surface with rolling resistance (dirt, packed sand or paved lane differ), elastic
-   sphere-sphere hits (your heavier taw shoots through), dust puffs and clinks. 2-6 players, any mix of you, friends
-   (pass and play) and the computer. */
+/* Fatateer (الفتاتير) — Adeni glass marbles in 3D, following the consolidated Adeni rules:
+   - Al-Qaz' (القزع), the ring / pot challenge: everyone stakes marbles into the pot (البد). A player scatters the whole pot
+     into the ring (النفش); the scatter only counts if every marble lands fully inside, otherwise the next player scatters.
+     A valid scatter is locked ("حريق نفشة أبد") and the scatterer shoots first from the line with their shooter (الهتّي).
+     Win the WHOLE pot with one clean shot: exactly one target marble knocked fully out of the ring and no other marble
+     moved. Anything else is a failed shot and the next player gathers and scatters again. Several rounds; most marbles wins.
+   - Al-Hafar (الحفر), hole with a pot: the pot marbles sit around a small hole. Strike them in with your shooter; while you
+     keep pocketing you keep shooting, and whoever pockets the final marble wins the pot. (This version: you pocket pot
+     marbles with your shooter; a shooter that drops in goes back to the line.)
+   - Al-Ayeen (الايين), race then chase: everyone shoots their own marble at the hole from the line; the first one in wins.
+     If nobody gets in, the chase starts: shoot from where your marble lies and the first to hit another player's marble wins.
+   Who starts: Thullath / Nasad (ثلّث / نسد, hands back-to-back, the odd palm starts), Al-Tasbeera (التسبيرة, roll at the ring,
+   closest without entering), or for the hole games, closest to the hole, measured in hand-spans (شبر) and finger-widths (بنانة).
+   World units are centimetres. The ring is 30 cm across, as in the Aden recollection; the shooting line is brought in to 45 cm
+   so it fits a phone screen. */
 (() => {
 const { stage, clamp, rnd, pick, icon } = QAKit;
-const MR = 1.5, TR = 1.9;                         // marble and taw radius (cm)
+const MR = .8, TR = 1.25, RING = 15, HOLE = 2.2, LINE = RING + 45, SPAN = 20, FINGER = 2;
 const PCOL = ['#c8ff2e', '#ff4a57', '#36e0ff', '#ffb627', '#ff9de0', '#b48cff'], PNAME = ['You', 'Saeed', 'Huda', 'Amjad', 'Noor', 'Fadl'];
-const SURF = [{ id: 'dirt', name: 'Courtyard dirt', roll: 22, col: 0xb8885a, dust: '#d8b080' }, { id: 'sand', name: 'Packed sand', roll: 32, col: 0xe2c690, dust: '#f0dcb0' }, { id: 'paved', name: 'Paved lane', roll: 12, col: 0x9a9a92, dust: '#c8c8c0' }];
-const GLASS = ['#36e0ff', '#ff4a57', '#2ee6a8', '#ffd23f', '#b48cff', '#ff8a4c', '#7ec8ff', '#ff9de0'];
+const SURF = [{ id: 'dirt', name: 'Courtyard dirt', roll: 26, col: 0xa8784a, dust: '#d8b080' }, { id: 'sand', name: 'Packed sand', roll: 36, col: 0xd2b47c, dust: '#f0dcb0' }, { id: 'paved', name: 'Paved lane', roll: 15, col: 0x8a8a84, dust: '#c8c8c0' }];
+const GLASS = ['#2a9ad8', '#e8343c', '#22b878', '#f0b818', '#8a5ad8', '#f07a2a', '#40c0d0', '#e05aa0'];
+const MODES = [{ id: 'qaz', label: 'Al-Qaz’ (ring)', tip: 'Scatter the pot, one clean hit wins it all' }, { id: 'hafar', label: 'Al-Hafar (hole)', tip: 'Pocket the pot marbles; the last one wins the pot' }, { id: 'ayeen', label: 'Al-Ayeen (race & chase)', tip: 'First into the hole wins, else hit another marble' }];
+const fmtSpan = d => { const s = Math.floor(d / SPAN), f = Math.round((d - s * SPAN) / FINGER); return `${s ? `${s} span${s > 1 ? 's' : ''}` : ''}${s && f ? ' and ' : ''}${f || !s ? `${f} finger-width${f === 1 ? '' : 's'}` : ''}`; };
 Arcade.register({
   id: 'fatateer', title: 'Fatateer 3D',
-  blurb: 'Adeni glass marbles in 3D: lag to the hole to see who starts, then knock marbles out of the ring, hunt shooters into the hole, or hit the called target. 2-6 players.',
-  goal: 'Win the most marbles. Lag first: toss your marble closest to the hole to shoot first. Ring: knock marbles out of the circle. Hole: sink your shooter, then knock the other shooters out. Called shot: hit exactly the marble that was called.',
-  controls: 'Drag back from your shooter like a slingshot and let go (longer drag = harder flick). In Ring mode, drag along the ring line first to move your shooter to a better spot. ⟲ ⟳ turn the view.',
-  stat: s => s.wins ? `${s.wins} games won` : '',
+  blurb: 'Adeni glass marbles in 3D. Al-Qaz’: scatter the pot into the ring and win it all with one clean hit. Al-Hafar and Al-Ayeen: hole games. 2-6 players.',
+  goal: 'Win the most marbles. Al-Qaz’ (ring): knock exactly ONE marble out of the ring without moving any other to take the whole pot. Al-Hafar: pocket the last pot marble in the hole. Al-Ayeen: get your marble in the hole first, or hit someone’s marble in the chase.',
+  controls: 'Drag back anywhere like a slingshot and let go: longer drag = harder flick. To move your shooter along the line, drag sideways along the white line first. ⟲ ⟳ turn the view.',
+  stat: s => s.wins ? `${s.wins} matches won` : '',
   icon: icon('#c89a68', '#8a6438', c => {
-    c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 4; c.beginPath(); c.ellipse(145, 110, 110, 60, 0, 0, 7); c.stroke();
-    const m = (x, y, r, col) => { const g = c.createRadialGradient(x - r * .4, y - r * .4, r * .1, x, y, r); g.addColorStop(0, '#ffffff'); g.addColorStop(.35, col); g.addColorStop(1, 'rgba(0,0,0,.35)'); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); };
-    m(120, 100, 14, '#36e0ff'); m(160, 115, 14, '#ff4a57'); m(140, 125, 14, '#2ee6a8'); m(175, 92, 14, '#ffd23f'); m(60, 160, 20, '#c8ff2e');
-    c.fillStyle = 'rgba(60,40,20,.7)'; c.beginPath(); c.ellipse(230, 160, 12, 6, 0, 0, 7); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = 4; c.beginPath(); c.ellipse(145, 100, 100, 52, 0, 0, 7); c.stroke();
+    const m = (x, y, r, col) => { const g = c.createRadialGradient(x - r * .4, y - r * .4, r * .1, x, y, r); g.addColorStop(0, '#ffffff'); g.addColorStop(.3, col); g.addColorStop(1, 'rgba(0,0,0,.55)'); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); };
+    m(120, 95, 11, '#2a9ad8'); m(160, 108, 11, '#e8343c'); m(140, 118, 11, '#22b878'); m(170, 86, 11, '#f0b818'); m(145, 178, 20, '#e6edf2');
   }),
   mount(root, api) {
-    const S = stage(root, api, { three: true, label: 'Fatateer. Drag back from your shooter and let go to flick.' });
-    S.hud(['Turn', 'Mode', 'Left']); S.say('Loading 3D…');
-    let T3, scene, cam, marbles = [], players = [], turn = 0, order = [], phase = 'setup', mode = api.save.get().mode || 'ring', surf = SURF[api.save.get().surf || 0], yaw = 0, aim = null, moving = false, called = null, firstHit = null, scoredThisShot = 0, puffs = [], meas = null, cpuT = 0, ringR = 24, hole = { x: 0, z: 0 }, lagList = [], camT = { x: 0, z: 0, zoom: 1 };
-    const cfg = { n: api.save.get().n || 3, humans: api.save.get().humans || 1 };
-    api.setModes({ list: [{ id: 'ring', label: 'Ring (taw)', tip: 'Knock marbles out of the ring' }, { id: 'hole', label: 'Hole hunter', tip: 'Sink your shooter, then hunt the others' }, { id: 'called', label: 'Called shot', tip: 'Hit exactly the marble that was called' }], get: () => mode, set: id => { mode = id; api.save.put({ ...api.save.get(), mode }); setup(); } });
-    api.setTools([{ id: 'l', label: '⟲', onClick: () => { yaw -= Math.PI / 6; } }, { id: 'r', label: '⟳', onClick: () => { yaw += Math.PI / 6; } }, { id: 'new', label: 'New game', onClick: () => setup() }]);
-    api.setCheats([{ label: 'Steady hand', tip: 'Your next shot goes exactly where you aim', run: () => { steady = true; return 'Steady…'; } }, { label: 'Win a marble', run: () => { const m = marbles.find(m => !m.taw && !m.owner && !m.out); if (m) capture(m, players[0]); return 'Pocketed one'; } }]);
+    const S = stage(root, api, { three: true, label: 'Fatateer. Drag back and let go to flick your shooter.' });
+    S.hud(['Turn', 'Pot', 'Round']); S.say('Loading 3D…');
+    const sv0 = api.save.get();
+    let mode = MODES.some(m => m.id === sv0.mode) ? sv0.mode : 'qaz', surf = SURF[sv0.surf || 0], opener = sv0.opener || 'nasad';
+    const cfg = { n: sv0.n || 3, humans: sv0.humans || 1, rounds: sv0.rounds || 3, stake: 3 };
+    let T3, scene, cam, marbles = [], players = [], order = [], turnI = 0, phase = 'setup', yaw = 0, aim = null, moving = false, cur = null, puffs = [], cpuT = 0, round = 1, pot = 0, scatterI = 0, chase = false, lagDone = [], overlay = '', overlayT = 0, contact = new Set(), firstHit = null, shotStart = new Map(), ground, ringM, crossM, holeG, lineM;
+    api.setModes({ list: MODES, get: () => mode, set: id => { mode = id; save(); setup(); } });
+    api.setTools([{ id: 'l', label: '⟲', onClick: () => { yaw -= Math.PI / 8; } }, { id: 'r', label: '⟳', onClick: () => { yaw += Math.PI / 8; } }, { id: 'new', label: 'New match', onClick: () => setup() }]);
+    api.setCheats([{ label: 'Steady hand', tip: 'Your next flick goes exactly where you aim', run: () => { steady = true; return 'Steady…'; } }, { label: '+10 marbles', tip: 'Refill your bag', run: () => { if (players[0]) players[0].bank += 10; return '+10'; } }]);
     let steady = false;
-    /* ---------- setup: players, surface, then the lag ---------- */
+    function save() { api.save.put({ ...api.save.get(), mode, n: cfg.n, humans: cfg.humans, rounds: cfg.rounds, surf: SURF.indexOf(surf), opener }); }
+    /* ---------- match setup ---------- */
     function setup() {
-      phase = 'setup';
-      api.dialog({ title: 'Fatateer', html: `<p><b>Players:</b> ${cfg.n} (${cfg.humans} on this screen, ${cfg.n - cfg.humans} computer)</p><p><b>Ground:</b> ${surf.name}</p><p>Tap to change, then Play.</p>`, actions: [
+      phase = 'setup'; clearMarbles(); if (T3) dressCourt();
+      const openers = mode === 'qaz' ? { nasad: 'Thullath / Nasad (hands)', tasbeera: 'Al-Tasbeera (roll at the ring)' } : { hole: 'Closest to the hole (spans)' };
+      if (!openers[opener]) opener = Object.keys(openers)[0];
+      api.dialog({ title: MODES.find(m => m.id === mode).label, html: `<p>${MODES.find(m => m.id === mode).tip}.</p><p><b>${cfg.n}</b> players (${cfg.humans} on this screen) · <b>${cfg.rounds}</b> rounds · ground: <b>${surf.name}</b><br>Who starts: <b>${openers[opener]}</b></p>`, actions: [
         { label: `Players: ${cfg.n}`, ghost: true, onClick: () => { cfg.n = cfg.n >= 6 ? 2 : cfg.n + 1; cfg.humans = Math.min(cfg.humans, cfg.n); save(); setup(); } },
         { label: `On this screen: ${cfg.humans}`, ghost: true, onClick: () => { cfg.humans = cfg.humans >= cfg.n ? 1 : cfg.humans + 1; save(); setup(); } },
+        { label: `Rounds: ${cfg.rounds}`, ghost: true, onClick: () => { cfg.rounds = cfg.rounds >= 7 ? 1 : cfg.rounds + 2; save(); setup(); } },
+        ...(mode === 'qaz' ? [{ label: `Who starts: ${opener === 'nasad' ? 'Nasad' : 'Tasbeera'}`, ghost: true, onClick: () => { opener = opener === 'nasad' ? 'tasbeera' : 'nasad'; save(); setup(); } }] : []),
         { label: `Ground: ${surf.name}`, ghost: true, onClick: () => { surf = SURF[(SURF.indexOf(surf) + 1) % SURF.length]; save(); setup(); } },
-        { label: 'Play', onClick: start }] });
+        { label: 'Play', onClick: startMatch }] });
     }
-    function save() { api.save.put({ ...api.save.get(), n: cfg.n, humans: cfg.humans, surf: SURF.indexOf(surf) }); }
-    function start() {
-      players = Array.from({ length: cfg.n }, (_, i) => ({ i, name: i < cfg.humans ? (cfg.humans > 1 ? `Player ${i + 1}` : 'You') : PNAME[i], cpu: i >= cfg.humans, col: PCOL[i], won: 0, alive: true, hunter: false }));
-      if (T3) { if (ground) ground.material.color.set(surf.col); }
-      clearMarbles(); lagList = []; turn = 0; phase = 'lag'; order = []; S.say('Lagging', `${players[0].name}: toss at the hole`); setTimeout(() => !S.dead && phase === 'lag' && S.say(''), 1500);
-      spawnLag(0);
+    function startMatch() {
+      players = Array.from({ length: cfg.n }, (_, i) => ({ i, name: i < cfg.humans ? (cfg.humans > 1 ? `Player ${i + 1}` : 'You') : PNAME[i], cpu: i >= cfg.humans, col: PCOL[i], bank: 12, taw: null }));
+      round = 1; dressCourt(); chooseStarter();
     }
-    function clearMarbles() { for (const m of marbles) if (m.mesh) scene.remove(m.mesh); marbles = []; }
-    function newMarble(x, z, col, r, extra = {}) {
-      const m = { x, z, vx: 0, vz: 0, r, col, spin: 0, rx: 0, rz: 0, out: false, ...extra }; m.mesh = marbleMesh(col, r); scene.add(m.mesh); marbles.push(m); return m;
+    /* ---------- who starts ---------- */
+    function chooseStarter() {
+      clearMarbles();
+      if (mode === 'qaz' && opener === 'nasad') {   // hands back-to-back, raised, dropped: the palm facing the other way starts
+        let res, odd = -1, tries = 0;
+        while (odd < 0 && tries++ < 30) { res = players.map(() => Math.random() < .5); const up = res.filter(Boolean).length; if (up === 1) odd = res.indexOf(true); else if (up === players.length - 1) odd = res.indexOf(false); if (players.length === 2) odd = res[0] === res[1] ? -1 : Math.floor(Math.random() * 2); }
+        if (odd < 0) odd = 0;
+        say(`Thullath… Nasad!<br>${players.map((p, k) => `<span style="color:${p.col}">${p.name} ${res[k] ? '🤚 up' : '🫳 down'}</span>`).join(' · ')}<br>${players[odd].name} starts`, 3);
+        setTimeout(() => { if (!S.dead) beginRound(odd); }, 2600);
+      } else { phase = 'lag'; lagDone = []; say(mode === 'qaz' ? 'Al-Tasbeera: roll toward the ring, closest WITHOUT entering starts' : 'Toss at the hole: closest starts', 2.5); nextLag(); }
     }
-    const LAG_LINE = 30;   // toss from here toward the hole at 0,0
-    function spawnLag(pi) { const p = players[pi]; const m = newMarble(0, LAG_LINE, p.col, TR, { taw: true, owner: p, lag: true }); p.lagM = m; aimFrom(m); if (p.cpu) cpuT = .8; }
-    function aimFrom(m) { cur = m; }
-    let cur = null;
-    function afterLag() {
-      lagList = players.map(p => ({ p, d: Math.hypot(p.lagM.x - hole.x, p.lagM.z - hole.z) })).sort((a, b) => a.d - b.d);
-      // a close call between the first two gets a hand-span measurement
-      if (lagList.length > 1 && lagList[1].d - lagList[0].d < 2.2) { meas = { t: 2.6, a: lagList[0], b: lagList[1] }; S.say('Close call!', 'Measuring hand-spans…'); }
-      order = lagList.map(l => l.p.i);
-      setTimeout(() => { if (S.dead) return; S.say(''); meas = null; for (const p of players) { scene.remove(p.lagM.mesh); marbles = marbles.filter(m => m !== p.lagM); } beginGame(); }, meas ? 2800 : 900);
+    function nextLag() {
+      const k = lagDone.length; if (k >= players.length) return endLag();
+      const p = players[k]; cur = newMarble(rnd(-6, 6), LINE, p.col, TR, { taw: true, owner: p, lag: true }); focusOn(cur); if (p.cpu) cpuT = 1;
     }
-    function beginGame() {
-      phase = 'play'; turn = 0;
-      if (mode === 'ring') { const per = Math.max(2, Math.round(12 / players.length)); for (let k = 0; k < per * players.length; k++) { const a = rnd(Math.PI * 2), d = Math.sqrt(Math.random()) * ringR * .45; newMarble(Math.cos(a) * d, Math.sin(a) * d, pick(GLASS), MR); } players.forEach(p => { p.taw = newMarble(0, 0, p.col, TR, { taw: true, owner: p }); park(p); }); }
-      else if (mode === 'hole') { players.forEach((p, i) => { const a = i / players.length * Math.PI * 2; p.taw = newMarble(Math.cos(a) * 22, Math.sin(a) * 22, p.col, TR, { taw: true, owner: p }); }); }
-      else { for (let k = 0; k < 9; k++) { const a = k / 9 * Math.PI * 2 + rnd(-.2, .2), d = rnd(6, 16); newMarble(Math.cos(a) * d, Math.sin(a) * d, GLASS[k % GLASS.length], MR, { label: k + 1 }); } players.forEach(p => { p.taw = newMarble(0, 24, p.col, TR, { taw: true, owner: p }); p.taw.mesh.visible = false; }); }
-      startTurn();
+    function endLag() {
+      const targetD = m => mode === 'qaz' ? (Math.hypot(m.x, m.z) <= RING ? 1e4 + Math.hypot(m.x, m.z) : Math.hypot(m.x, m.z) - RING) : Math.hypot(m.x, m.z);
+      const list = lagDone.map(m => ({ p: m.owner, d: targetD(m) })).sort((a, b) => a.d - b.d);
+      const lines = list.map(l => `<span style="color:${l.p.col}">${l.p.name}: ${l.d >= 1e4 ? 'inside the ring (does not count)' : fmtSpan(l.d)}</span>`).join('<br>');
+      const close = list.length > 1 && list[1].d - list[0].d < FINGER * 2 && list[0].d < 1e4;
+      say(`${close ? '✋ Close call, measured: ' : ''}<br>${lines}<br><b>${list[0].p.name} starts</b>`, 4);
+      setTimeout(() => { if (S.dead) return; clearMarbles(); beginRound(list[0].p.i); }, close ? 3600 : 2600);
     }
-    const curP = () => players[order[turn % order.length]];
-    function park(p) { if (!p.taw) return; const a = Math.PI / 2 + order.indexOf(p.i) * .3; p.taw.x = Math.cos(a) * (ringR + 2); p.taw.z = Math.sin(a) * (ringR + 2); p.taw.vx = p.taw.vz = 0; p.taw.out = false; p.taw.mesh.visible = true; }
+    /* ---------- rounds ---------- */
+    function beginRound(first) {
+      clearMarbles(); chase = false;
+      // stakes into the pot (Al-Bad); a player with an empty bag sits out
+      pot = 0; players.forEach(p => { p.inRound = p.bank > 0; const s = Math.min(cfg.stake, p.bank); p.bank -= s; pot += s; });
+      order = players.filter(p => p.inRound).map(p => p.i); const fi = order.indexOf(first); turnI = fi < 0 ? 0 : fi;
+      if (order.length < 2) return endMatch();
+      if (mode === 'qaz') { scatterI = turnI; startScatter(); }
+      else if (mode === 'hafar') { for (let k = 0; k < Math.min(15, Math.max(6, pot)); k++) { const a = rnd(Math.PI * 2), d = rnd(4, 11); newMarble(Math.cos(a) * d, Math.sin(a) * d, GLASS[k % GLASS.length], MR, { pot: true }); } order.forEach((pi, k) => { const p = players[pi]; p.taw = newMarble((k - (order.length - 1) / 2) * 5, LINE, p.col, TR, { taw: true, owner: p }); }); startTurn(); }
+      else { order.forEach((pi, k) => { const p = players[pi]; p.taw = newMarble((k - (order.length - 1) / 2) * 5, LINE, p.col, TR, { taw: true, owner: p }); p.raced = false; }); startTurn(); }
+    }
+    const curP = () => players[order[turnI % order.length]];
+    // --- Al-Qaz': scatter, then one shot ---
+    function startScatter() {
+      phase = 'scatter'; clearMarbles(); const p = players[order[scatterI % order.length]];
+      say(`Round ${round}: ${p.name} scatters the pot (${pot} marbles)<br><small>Every marble must land inside the ring</small>`, 2);
+      cur = { x: 0, z: LINE, r: TR, owner: p, fake: true }; focusOn(cur); if (p.cpu) cpuT = 1.4;
+    }
+    function doScatter(p, tx, tz, spread) {
+      clearMarbles(); const marks = [];
+      for (let k = 0; k < pot; k++) { const a = rnd(Math.PI * 2), d = Math.abs(gauss()) * spread; marks.push(newMarble(tx + Math.cos(a) * d, tz + Math.sin(a) * d, GLASS[k % GLASS.length], MR, { pot: true, vx: rnd(-6, 6), vz: rnd(-6, 6) })); }
+      moving = true; phase = 'scattering'; api.noise(.35, .08, 3000);
+    }
+    function afterScatter() {
+      const p = players[order[scatterI % order.length]], outside = marbles.filter(m => m.pot && Math.hypot(m.x, m.z) > RING - m.r);
+      if (outside.length) { say(`Invalid scatter: ${outside.length} marble${outside.length > 1 ? 's' : ''} outside the ring.<br>The next player gathers the pot.`, 2.2); scatterI++; setTimeout(() => !S.dead && startScatter(), 2000); return; }
+      say(`حريق نفشة أبد — the scatter is locked!<br>${p.name} shoots first`, 2); turnI = scatterI % order.length;
+      p.taw = newMarble(0, LINE, p.col, TR, { taw: true, owner: p }); setTimeout(() => !S.dead && startTurn(), 900);
+    }
     function startTurn() {
-      const p = curP(); if (!p.alive) return nextTurn();
-      firstHit = null; scoredThisShot = 0; moving = false;
-      if (mode === 'ring') { park(p); players.forEach(o => { if (o !== p && o.taw) o.taw.mesh.visible = false; }); }
-      if (mode === 'called') { players.forEach(o => { o.taw.mesh.visible = o === p; }); const tw = p.taw; tw.x = rnd(-6, 6); tw.z = 24; tw.vx = tw.vz = 0; tw.out = false; const left = marbles.filter(m => !m.taw && !m.owner && !m.out); called = left.length ? pick(left) : null; if (called) S.pop(S.W / 2, S.H * .25, `${players[order[(turn + 1) % order.length]].name} calls marble #${called.label}!`, '#ffd23f'); }
-      cur = p.taw; camT.x = cur.x * .4; camT.z = cur.z * .4;
-      S.pop(S.W / 2, S.H * .18, `${p.name}’s shot`, p.col); if (p.cpu) cpuT = 1.1;
+      const p = curP(); moving = false; firstHit = null; contact = new Set();
+      if (mode === 'qaz') { phase = 'shot'; marbles.filter(m => m.taw && m.owner !== p).forEach(m => kill(m)); if (!p.taw || p.taw.dead) p.taw = newMarble(0, LINE, p.col, TR, { taw: true, owner: p }); else { p.taw.x = clamp(p.taw.x, -20, 20); p.taw.z = LINE; p.taw.vx = p.taw.vz = 0; } }
+      else phase = 'shot';
+      if (mode === 'ayeen' && !chase) { p.taw.x = clamp(p.taw.x, -20, 20); p.taw.z = LINE; }
+      if (mode === 'hafar' && (p.taw.inHole || Math.hypot(p.taw.x, p.taw.z) < HOLE)) { p.taw.inHole = false; p.taw.x = rnd(-8, 8); p.taw.z = LINE; }
+      cur = p.taw; shotStart = new Map(marbles.map(m => [m, [m.x, m.z]])); focusOn(cur);
+      if (p.cpu) cpuT = 1.2; else say(`${p.name}: ${mode === 'qaz' ? 'knock ONE marble out, touch nothing else' : mode === 'hafar' ? 'strike pot marbles into the hole' : chase ? 'chase! hit another marble' : 'shoot your marble into the hole'}`, 1.6);
     }
-    function nextTurn() {
-      if (gameOver()) return; turn++; let guard = 0; while (!curP().alive && guard++ < 10) turn++; startTurn();
+    function afterShot() {
+      const p = curP();
+      if (mode === 'qaz') {
+        const targets = marbles.filter(m => m.pot && !m.dead), moved = targets.filter(m => { const s = shotStart.get(m); return s && Math.hypot(m.x - s[0], m.z - s[1]) > .4; }), out = targets.filter(m => Math.hypot(m.x, m.z) > RING + m.r);
+        if (out.length === 1 && moved.length === 1 && moved[0] === out[0]) { p.bank += pot; say(`يقمعها! A clean hit.<br><b>${p.name} wins the pot: ${pot} marbles</b>`, 3); api.tone(1200, { type: 'triangle', dur: .12, vol: .08 }); api.tone(1600, { type: 'triangle', dur: .2, vol: .07, delay: .1 }); if (!p.cpu) api.haptic([20, 30, 40]); return roundOver(p); }
+        const why = !moved.length ? 'Missed' : moved.length > 1 ? `${moved.length} marbles moved` : 'Hit one, but it stayed in the ring';
+        say(`${why}: failed shot.<br>The next player gathers and scatters the pot.`, 2.2); scatterI++; kill(p.taw); setTimeout(() => !S.dead && startScatter(), 2100); return;
+      }
+      if (mode === 'hafar') {
+        const sunk = marbles.filter(m => m.pot && m.sunkNow); sunk.forEach(m => { m.sunkNow = false; });
+        const left = marbles.filter(m => m.pot && !m.dead && !m.inHole).length;
+        if (sunk.length && !left) { p.bank += pot; say(`${p.name} pockets the last marble<br><b>and wins the pot: ${pot}</b>`, 3); return roundOver(p); }
+        if (sunk.length) { say(`${p.name} pockets ${sunk.length}: shoot again`, 1.4); return startTurn(); }
+        turnI++; return startTurn();
+      }
+      // Al-Ayeen
+      if (p.taw.inHole && !chase) { p.bank += pot; say(`${p.name} is in the hole first!<br><b>Wins the pot: ${pot}</b>`, 3); return roundOver(p); }
+      if (chase && firstHit && firstHit.taw && firstHit.owner !== p) { p.bank += pot; say(`${p.name} hits ${firstHit.owner.name}’s marble!<br><b>Wins the pot: ${pot}</b>`, 3); return roundOver(p); }
+      if (chase && p.taw.inHole) { p.bank += pot; say(`${p.name} drops into the hole during the chase<br><b>Wins the pot: ${pot}</b>`, 3); return roundOver(p); }
+      p.raced = true;
+      if (!chase && order.every(i => players[i].raced)) { chase = true; say('Nobody made the hole: THE CHASE!<br>Shoot from where your marble lies and hit another one', 2.4); }
+      turnI++; startTurn();
     }
-    function gameOver() {
-      let done = false;
-      if (mode === 'ring' || mode === 'called') done = !marbles.some(m => !m.taw && !m.owner && !m.out);
-      if (mode === 'hole') done = players.filter(p => p.alive).length <= 1;
-      if (!done) return false;
-      phase = 'over'; const rank = players.slice().sort((a, b) => (b.won - a.won) || (b.alive - a.alive)), win = rank[0];
+    function roundOver(winner) {
+      phase = 'between';
+      setTimeout(() => { if (S.dead) return; if (round >= cfg.rounds || players.filter(p => p.bank > 0).length < 2) return endMatch(); round++; beginRound(winner.i); }, 3000);
+    }
+    function endMatch() {
+      phase = 'over'; const rank = players.slice().sort((a, b) => b.bank - a.bank), win = rank[0];
       if (!win.cpu) { const s = api.save.get(); api.save.put({ ...s, wins: (s.wins || 0) + 1 }); api.win(); }
-      api.dialog({ title: `${win.name} win${win.name === 'You' ? '' : 's'}!`, cls: win.cpu ? '' : 'win', html: rank.map((p, k) => `<p style="color:${p.col};font-weight:900">${k + 1}. ${p.name}: ${p.won} marble${p.won === 1 ? '' : 's'}${mode === 'hole' ? (p.alive ? ' · still in' : ' · knocked out') : ''}</p>`).join(''), actions: [{ label: 'Play again', onClick: start }, { label: 'Change players', ghost: true, onClick: setup }] });
-      return true;
+      api.dialog({ title: `${win.name} win${win.name === 'You' ? '' : 's'} the match!`, cls: win.cpu ? '' : 'win', html: rank.map((p, k) => `<p style="color:${p.col};font-weight:900">${k + 1}. ${p.name}: ${p.bank} marbles</p>`).join(''), actions: [{ label: 'Play again', onClick: startMatch }, { label: 'Change setup', ghost: true, onClick: setup }] });
     }
-    function capture(m, p) { m.owner = p; m.out = true; p.won++; scene.remove(m.mesh); api.tone(1200, { type: 'triangle', dur: .1, vol: .07 }); api.tone(1600, { type: 'triangle', dur: .12, vol: .05, delay: .06 }); S.pop(S.W / 2, S.H * .3, `${p.name} +1`, p.col); scoredThisShot++; }
     /* ---------- shooting ---------- */
-    function shoot(m, vx, vz) { m.vx = vx; m.vz = vz; moving = true; api.tone(500, { type: 'triangle', dur: .04, vol: .05 }); puff(m.x, m.z, 4); }
-    function cpuShot(p) {
-      p = p || curP(); const tw = phase === 'lag' ? cur : (p.taw || cur), err = .06; let tx = hole.x, tz = hole.z, pow = 1;
-      if (phase === 'lag') { const d = Math.hypot(tw.x - hole.x, tw.z - hole.z), v = Math.sqrt(2 * surf.roll * d) * rnd(.92, 1.06), a = Math.atan2(hole.z - tw.z, hole.x - tw.x) + rnd(-err, err); return shoot(tw, Math.cos(a) * v, Math.sin(a) * v); }
-      let target = null;
-      if (mode === 'ring') { const left = marbles.filter(m => !m.taw && !m.owner && !m.out); target = left.sort((a, b) => Math.hypot(a.x - tw.x, a.z - tw.z) - Math.hypot(b.x - tw.x, b.z - tw.z))[0]; }
-      else if (mode === 'called') target = called;
-      else { if (!p.hunter) target = { x: hole.x, z: hole.z, hole: true }; else target = players.filter(o => o !== p && o.alive).map(o => o.taw).sort((a, b) => Math.hypot(a.x - tw.x, a.z - tw.z) - Math.hypot(b.x - tw.x, b.z - tw.z))[0]; }
-      if (!target) return shoot(tw, rnd(-5, 5), -20);
-      const d = Math.hypot(target.x - tw.x, target.z - tw.z), a = Math.atan2(target.z - tw.z, target.x - tw.x) + rnd(-err, err) * (1 + d / 30);
-      const v = target.hole ? Math.sqrt(2 * surf.roll * d) * rnd(.95, 1.05) : Math.sqrt(2 * surf.roll * (d + 18)) * rnd(1, 1.2);
-      shoot(tw, Math.cos(a) * v, Math.sin(a) * v);
+    const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+    function flick(vx, vz) {
+      if (phase === 'scatter') { const p = players[order[scatterI % order.length]], sp = Math.hypot(vx, vz), d = sp * sp / (2 * surf.roll), a = Math.atan2(vz, vx); doScatter(p, cur.x + Math.cos(a) * d, cur.z + Math.sin(a) * d, p.cpu ? rnd(3.5, 6) : 4.5); return; }
+      cur.vx = vx; cur.vz = vz; moving = true; api.tone(500, { type: 'triangle', dur: .04, vol: .05 }); puff(cur.x, cur.z, 4); if (phase === 'lag') phase = 'lagroll';
     }
-    // pointer: drag back from the shooter (slingshot). In Ring mode a drag that starts on the ring line away from the shooter slides it along the line.
+    function cpuShot() {
+      const p = phase === 'lag' ? lagDone.length < players.length && players[lagDone.length] : phase === 'scatter' ? players[order[scatterI % order.length]] : curP(); if (!p) return;
+      const err = .025, speedTo = d => Math.sqrt(2 * surf.roll * Math.max(1, d));
+      if (phase === 'scatter') { const d = LINE, v = speedTo(d) * rnd(.97, 1.03), a = Math.atan2(-LINE, 0) + rnd(-err, err); return flick(Math.cos(a) * v, Math.sin(a) * v); }
+      if (phase === 'lag') { const goal = mode === 'qaz' ? RING + 2.5 : 0, d = Math.max(1, LINE - goal - (cur.x ? 0 : 0)), a = Math.atan2(-cur.z + goal * Math.sign(cur.z), -cur.x) + rnd(-err, err); const v = speedTo(Math.hypot(cur.x, cur.z) - goal) * rnd(.93, 1.05); return flick(Math.cos(a) * v, Math.sin(a) * v); }
+      let tx = 0, tz = 0, extra = 0;
+      if (mode === 'qaz') { // the most isolated marble nearest the ring edge, pushed straight out
+        const ts = marbles.filter(m => m.pot && !m.dead); let best = null, bs = -1e9; for (const m of ts) { const iso = Math.min(...ts.filter(o => o !== m).map(o => Math.hypot(o.x - m.x, o.z - m.z)), 99), edge = Math.hypot(m.x, m.z); const sc = iso * 2 + edge - Math.hypot(m.x - cur.x, m.z - cur.z) * .2; if (sc > bs) { bs = sc; best = m; } }
+        tx = best.x; tz = best.z; extra = RING - Math.hypot(best.x, best.z) + 14;
+      } else if (mode === 'hafar') { const ts = marbles.filter(m => m.pot && !m.dead && !m.inHole).sort((a, b) => Math.hypot(a.x, a.z) - Math.hypot(b.x, b.z)); const m = ts[0]; if (m) { const ax = -m.x, az = -m.z, al = Math.hypot(ax, az) || 1; tx = m.x - ax / al * (MR + TR) * .9; tz = m.z - az / al * (MR + TR) * .9; extra = al + 4; } }
+      else if (chase) { const o = players.filter(q => q !== p && order.includes(q.i)).map(q => q.taw).sort((a, b) => Math.hypot(a.x - cur.x, a.z - cur.z) - Math.hypot(b.x - cur.x, b.z - cur.z))[0]; tx = o.x; tz = o.z; extra = 6; }
+      const d = Math.hypot(tx - cur.x, tz - cur.z), a = Math.atan2(tz - cur.z, tx - cur.x) + rnd(-err, err) * (1 + d / 40), v = speedTo(d + extra) * rnd(.97, 1.06);
+      flick(Math.cos(a) * v, Math.sin(a) * v);
+    }
+    // pointer: a slingshot drag from anywhere; a drag that starts on the shooting line slides your shooter along it
     const ray = {};
     function toGround(px, py) { const T = T3; if (!ray.rc) { ray.rc = new T.Raycaster(); ray.pl = new T.Plane(new T.Vector3(0, 1, 0), 0); } ray.rc.setFromCamera(new T.Vector2(px / S.W * 2 - 1, -(py / S.H * 2 - 1)), cam); const v = new T.Vector3(); return ray.rc.ray.intersectPlane(ray.pl, v) ? v : null; }
+    const humanTurn = () => { const p = phase === 'lag' ? players[lagDone.length] : phase === 'scatter' ? players[order[scatterI % order.length]] : phase === 'shot' ? curP() : null; return p && !p.cpu; };
     S.onDown = (x, y) => {
-      if (!cur || moving || meas) return; const p = phase === 'lag' ? players[lagList.length] : curP(); if (!p || p.cpu || (phase !== 'play' && phase !== 'lag')) return;
-      const w = toGround(x, y); if (!w) return;
-      const onShooter = Math.hypot(w.x - cur.x, w.z - cur.z) < 6;
-      if (mode === 'ring' && phase === 'play' && !onShooter && Math.abs(Math.hypot(w.x, w.z) - (ringR + 2)) < 6) { aim = { slide: true }; return; }
-      aim = { x0: x, y0: y, x, y, w0: w };   // a slingshot drag can start anywhere: the pull is measured from where you pressed
+      if (!cur || moving || !humanTurn()) return; const w = toGround(x, y); if (!w) return;
+      if (!cur.fake && Math.abs(w.z - LINE) < 4 && Math.abs(w.x - cur.x) > 3 && (phase === 'shot' && (mode === 'qaz' || (mode === 'ayeen' && !chase)) || phase === 'lag')) { aim = { slide: true }; return; }
+      aim = { w0: w, w };
     };
-    S.onMove = (x, y) => { if (!aim) return; if (aim.slide) { const w = toGround(x, y); if (w) { const a = Math.atan2(w.z, w.x); cur.x = Math.cos(a) * (ringR + 2); cur.z = Math.sin(a) * (ringR + 2); } return; } aim.x = x; aim.y = y; const w = toGround(x, y); if (w) aim.w = w; };
+    S.onMove = (x, y) => { if (!aim) return; const w = toGround(x, y); if (!w) return; if (aim.slide) { cur.x = clamp(w.x, -25, 25); return; } aim.w = w; };
     S.onUp = () => {
       const a = aim; aim = null; if (!a || a.slide || !a.w) return;
-      const dx = a.w0.x - a.w.x, dz = a.w0.z - a.w.z, d = Math.hypot(dx, dz); if (d < 1.5) return;
-      const pow = clamp(d / 22, 0, 1), v = 6 + pow * 52, ang = Math.atan2(dz, dx) + (steady ? 0 : rnd(-.012, .012)); steady = false;
-      shoot(cur, Math.cos(ang) * v, Math.sin(ang) * v);
+      const dx = a.w0.x - a.w.x, dz = a.w0.z - a.w.z, d = Math.hypot(dx, dz); if (d < 1) return;
+      const pow = clamp(d / 18, 0, 1), v = 8 + pow * 62, ang = Math.atan2(dz, dx) + (steady ? 0 : rnd(-.008, .008)); steady = false;
+      flick(Math.cos(ang) * v, Math.sin(ang) * v);
     };
     /* ---------- physics ---------- */
+    function newMarble(x, z, col, r, extra = {}) { const m = { x, z, vx: 0, vz: 0, r, col, rx: 0, rz: 0, ...extra }; m.mesh = marbleMesh(col, r, !!extra.taw, extra.owner); scene.add(m.mesh); marbles.push(m); return m; }
+    function kill(m) { if (!m || m.dead) return; m.dead = true; scene.remove(m.mesh); marbles = marbles.filter(o => o !== m); }
+    function clearMarbles() { for (const m of marbles) if (m.mesh) scene.remove(m.mesh); marbles = []; }
     function puff(x, z, n) { for (let i = 0; i < n; i++) puffs.push({ x: x + rnd(-1, 1), z: z + rnd(-1, 1), y: .4, vx: rnd(-6, 6), vy: rnd(3, 8), vz: rnd(-6, 6), l: .7 }); }
+    const holeOn = () => mode !== 'qaz';
     function physics(dt) {
-      const live = marbles.filter(m => !m.out && m.mesh.visible);
-      for (const m of live) {
+      for (const m of marbles) {
+        if (m.inHole) continue;
         const sp = Math.hypot(m.vx, m.vz); if (sp > 0) { const ns = Math.max(0, sp - surf.roll * dt); m.vx *= ns / sp; m.vz *= ns / sp; }
         m.x += m.vx * dt; m.z += m.vz * dt; m.rx += m.vz * dt / m.r; m.rz -= m.vx * dt / m.r;
-        // the hole: slow marbles drop in
-        const dh = Math.hypot(m.x - hole.x, m.z - hole.z);
-        if (dh < 1.8 && Math.hypot(m.vx, m.vz) < 14 && !m.lag) { if (m.taw && mode === 'hole') { m.vx = m.vz = 0; m.x = hole.x; m.z = hole.z; if (!m.owner.hunter) { m.owner.hunter = true; S.pop(S.W / 2, S.H * .3, `${m.owner.name} is a hunter!`, m.owner.col); api.tone(330, { type: 'triangle', dur: .3, vol: .08, slide: .5 }); } m.x += 2.6; } else if (!m.taw) { m.vx *= .5; m.vz *= .5; } }
-        if (m.lag && dh < 1.6 && Math.hypot(m.vx, m.vz) < 10) { m.vx *= .3; m.vz *= .3; }
-        // court edge
-        const lim = 60; if (Math.abs(m.x) > lim) { m.x = Math.sign(m.x) * lim; m.vx *= -.4; } if (Math.abs(m.z) > lim) { m.z = Math.sign(m.z) * lim; m.vz *= -.4; }
+        if (holeOn()) { const dh = Math.hypot(m.x, m.z); if (dh < HOLE - m.r * .3 && Math.hypot(m.vx, m.vz) < 30) { m.inHole = true; m.vx = m.vz = 0; m.sunkNow = true; m.x *= .3; m.z *= .3; api.tone(300, { type: 'triangle', dur: .2, vol: .07, slide: .6 }); if (m === cur && mode === 'hafar') { /* the shooter fell in: it comes back to the line next turn */ } } else if (dh < HOLE + 1.5 && dh > .01) { const pull = 18 * dt; m.vx -= m.x / dh * pull; m.vz -= m.z / dh * pull; } }
+        const lim = 90; if (Math.abs(m.x) > lim) { m.x = Math.sign(m.x) * lim; m.vx *= -.4; } if (Math.abs(m.z) > lim) { m.z = Math.sign(m.z) * lim; m.vz *= -.4; }
       }
+      const live = marbles.filter(m => !m.inHole);
       for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {
         const a = live[i], b = live[j], dx = b.x - a.x, dz = b.z - a.z, d = Math.hypot(dx, dz), R = a.r + b.r; if (d >= R || d < 1e-6) continue;
         const nx = dx / d, nz = dz / d, ma = a.r ** 3, mb = b.r ** 3, o = R - d; a.x -= nx * o * mb / (ma + mb); a.z -= nz * o * mb / (ma + mb); b.x += nx * o * ma / (ma + mb); b.z += nz * o * ma / (ma + mb);
-        const rv = (b.vx - a.vx) * nx + (b.vz - a.vz) * nz; if (rv >= 0) continue; const jimp = -(1 + .92) * rv / (1 / ma + 1 / mb);
+        const rv = (b.vx - a.vx) * nx + (b.vz - a.vz) * nz; if (rv >= 0) continue; const jimp = -(1 + .9) * rv / (1 / ma + 1 / mb);
         a.vx -= jimp * nx / ma; a.vz -= jimp * nz / ma; b.vx += jimp * nx / mb; b.vz += jimp * nz / mb;
-        if (-rv > 2) { api.tone(2600 + Math.random() * 1400, { type: 'triangle', dur: .04, vol: Math.min(.09, -rv / 400) }); puff((a.x + b.x) / 2, (a.z + b.z) / 2, 3); }
+        if (-rv > 2) { api.tone(2600 + Math.random() * 1400, { type: 'triangle', dur: .04, vol: Math.min(.09, -rv / 300) }); puff((a.x + b.x) / 2, (a.z + b.z) / 2, 3); }
         if (cur && (a === cur || b === cur) && !firstHit) firstHit = a === cur ? b : a;
       }
     }
-    function settle() {
-      moving = false; const p = phase === 'lag' ? players[lagList.length] : curP();
-      if (phase === 'lag') { lagList.push(p); if (lagList.length < players.length) { spawnLag(lagList.length); S.pop(S.W / 2, S.H * .18, `${players[lagList.length].name}: toss at the hole`, players[lagList.length].col); } else afterLag(); return; }
-      if (mode === 'ring') {
-        for (const m of marbles) if (!m.taw && !m.owner && !m.out && Math.hypot(m.x, m.z) > ringR) capture(m, p);
-        if (gameOver()) return; if (scoredThisShot) { S.pop(S.W / 2, S.H * .22, 'Shoot again!', p.col); scoredThisShot = 0; cur = p.taw; if (Math.hypot(cur.x, cur.z) > ringR) park(p); if (p.cpu) cpuT = 1; return; }
-      } else if (mode === 'called') {
-        if (firstHit && firstHit === called) { capture(called, p); } else { const mine = marbles.filter(m => m.owner === p && !m.taw); S.pop(S.W / 2, S.H * .3, firstHit ? 'Wrong marble!' : 'Missed', '#ff4a57'); if (firstHit && mine.length) { const back = mine[0]; back.owner = null; back.out = false; p.won--; scene.add(back.mesh); back.x = rnd(-8, 8); back.z = rnd(-8, 8); } }
-        for (const m of marbles) if (!m.taw && !m.owner && !m.out && Math.hypot(m.x, m.z) > 40) { m.x *= .5; m.z *= .5; }
-      } else {
-        for (const o of players) if (o !== p && o.alive && o.taw && firstHit === o.taw && p.hunter) { o.alive = false; o.taw.out = true; scene.remove(o.taw.mesh); p.won++; S.pop(S.W / 2, S.H * .3, `${p.name} knocks out ${o.name}!`, p.col); api.tone(200, { type: 'sawtooth', dur: .3, vol: .07 }); }
-      }
-      nextTurn();
+    function settled() {
+      moving = false; marbles.forEach(m => { m.vx = m.vz = 0; });
+      if (phase === 'scattering') return afterScatter();
+      if (phase === 'lagroll') { lagDone.push(cur); phase = 'lag'; return nextLag(); }
+      if (phase === 'shot') afterShot();
     }
     /* ---------- 3D ---------- */
-    let ground, ringM, holeM, ringLine;
-    function marbleMesh(col, r) {
-      const T = T3, g = new T.Group();
-      const shell = new T.Mesh(new T.SphereGeometry(r, 24, 18), new T.MeshPhysicalMaterial({ color: 0xffffff, roughness: .05, metalness: 0, transmission: .85, thickness: r * 1.2, ior: 1.5, transparent: true, opacity: .9, clearcoat: 1 }));
-      const core = new T.Mesh(new T.TorusGeometry(r * .45, r * .16, 8, 20), new T.MeshStandardMaterial({ color: col, roughness: .3, emissive: col, emissiveIntensity: .15 })); core.rotation.x = rnd(3); core.rotation.y = rnd(3);
-      const core2 = new T.Mesh(new T.SphereGeometry(r * .35, 12, 10), new T.MeshStandardMaterial({ color: col, transparent: true, opacity: .55 }));
-      g.add(core, core2, shell); g.userData.spin = g; return g;
+    function marbleMesh(col, r, taw, owner) {
+      const T = T3, g = new T.Group(), c = new T.Color(col);
+      // a mostly-opaque tinted glass body with a bright cat's-eye swirl inside; the shooter is bigger, milky and banded
+      const body = new T.Mesh(new T.SphereGeometry(r, 28, 20), new T.MeshPhysicalMaterial({ color: taw ? 0xeef4ff : c, roughness: .08, metalness: 0, transmission: taw ? .15 : .3, thickness: r, ior: 1.5, transparent: true, opacity: taw ? .97 : .93, clearcoat: 1, clearcoatRoughness: .05 }));
+      g.add(body);
+      if (taw) { const band = new T.Mesh(new T.TorusGeometry(r * .99, r * .14, 8, 28), new T.MeshStandardMaterial({ color: owner ? owner.col : col, roughness: .3, emissive: owner ? owner.col : col, emissiveIntensity: .25 })); band.rotation.x = Math.PI / 2; g.add(band); const band2 = band.clone(); band2.rotation.set(0, 0, Math.PI / 2); band2.scale.set(.98, .98, .7); g.add(band2); }
+      else { for (let k = 0; k < 3; k++) { const petal = new T.Mesh(new T.SphereGeometry(r * .55, 10, 8), new T.MeshStandardMaterial({ color: k === 1 ? 0xffffff : c.clone().offsetHSL(0, 0, .15), roughness: .4 })); petal.scale.set(.22, 1, .55); petal.rotation.y = k * Math.PI / 3; g.add(petal); } }
+      if (taw && owner) { const ringG = new T.Mesh(new T.RingGeometry(r * 1.2, r * 1.45, 24), new T.MeshBasicMaterial({ color: owner.col, transparent: true, opacity: .55 })); ringG.rotation.x = -Math.PI / 2; ringG.position.y = -r + .05; ringG.userData.flat = true; g.add(ringG); }
+      return g;
+    }
+    function dressCourt() {
+      if (!T3) return; ground.material.color.set(surf.col);
+      ringM.visible = crossM.visible = mode === 'qaz'; holeG.visible = mode !== 'qaz';
     }
     async function init() {
       try { T3 = await S.three3(45); } catch { if (!S.dead) S.say('3D unavailable', 'This browser could not start WebGL'); return; }
       const T = T3; scene = S.scene; cam = S.camera; S.renderer.shadowMap.enabled = true;
-      scene.background = new T.Color(0xffe8c0); scene.fog = new T.Fog(0xffe8c0, 120, 240);
-      scene.add(new T.HemisphereLight(0xfff4e0, 0x8a6438, .7)); const sun = new T.DirectionalLight(0xfff0d0, 1.2); sun.position.set(-40, 80, 30); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -70, right: 70, top: 70, bottom: -70 }); scene.add(sun);
-      // ground with grain, courtyard walls with doors, a palm in a pot
-      const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 256, 256); for (let i = 0; i < 3500; i++) { x.fillStyle = `rgba(${Math.random() < .5 ? '90,60,30' : '255,240,210'},${Math.random() * .18})`; x.fillRect(Math.random() * 256, Math.random() * 256, 2, 2); }
-      const tex = new T.CanvasTexture(c); tex.wrapS = tex.wrapT = T.RepeatWrapping; tex.repeat.set(10, 10);
-      ground = new T.Mesh(new T.PlaneGeometry(160, 160), new T.MeshStandardMaterial({ color: surf.col, map: tex, roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+      scene.background = new T.Color(0xffe8c0); scene.fog = new T.Fog(0xffe8c0, 160, 320);
+      scene.add(new T.HemisphereLight(0xfff4e0, 0x8a6438, .75)); const sun = new T.DirectionalLight(0xfff0d0, 1.15); sun.position.set(-40, 90, 30); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -60, right: 60, top: 80, bottom: -40 }); scene.add(sun);
+      const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 256, 256); for (let i = 0; i < 4500; i++) { x.fillStyle = `rgba(${Math.random() < .5 ? '80,50,20' : '255,240,210'},${Math.random() * .22})`; x.fillRect(Math.random() * 256, Math.random() * 256, 2, 2); }
+      const tex = new T.CanvasTexture(c); tex.wrapS = tex.wrapT = T.RepeatWrapping; tex.repeat.set(14, 14);
+      ground = new T.Mesh(new T.PlaneGeometry(220, 220), new T.MeshStandardMaterial({ color: surf.col, map: tex, roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
       const wallM = new T.MeshStandardMaterial({ color: 0xf2dcb0, roughness: .9 });
-      for (const [px, pz, ry, w] of [[0, -70, 0, 140], [-70, 0, Math.PI / 2, 140], [70, 0, Math.PI / 2, 140]]) { const wl = new T.Mesh(new T.BoxGeometry(w, 26, 3), wallM); wl.position.set(px, 13, pz); wl.rotation.y = ry; wl.receiveShadow = true; scene.add(wl); }
-      for (const [px, col] of [[-30, 0x2a7ad8], [25, 0x2ea86a]]) { const door = new T.Mesh(new T.BoxGeometry(12, 20, 1), new T.MeshStandardMaterial({ color: col })); door.position.set(px, 10, -68.2); scene.add(door); const arch = new T.Mesh(new T.TorusGeometry(6, .8, 8, 16, Math.PI), new T.MeshStandardMaterial({ color: 0xffffff })); arch.position.set(px, 20, -68); scene.add(arch); }
-      const pot = new T.Mesh(new T.CylinderGeometry(4, 3, 6, 16), new T.MeshStandardMaterial({ color: 0xc0583a })); pot.position.set(55, 3, -55); scene.add(pot); for (let k = 0; k < 6; k++) { const leaf = new T.Mesh(new T.ConeGeometry(1.5, 14, 6), new T.MeshStandardMaterial({ color: 0x3f9b2f })); leaf.position.set(55, 12, -55); leaf.rotation.set(Math.cos(k) * .9, k, Math.sin(k) * .9); scene.add(leaf); }
-      ringLine = new T.Mesh(new T.RingGeometry(ringR - .3, ringR + .3, 96), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .75 })); ringLine.rotation.x = -Math.PI / 2; ringLine.position.y = .03; scene.add(ringLine);
-      holeM = new T.Mesh(new T.CircleGeometry(1.9, 24), new T.MeshBasicMaterial({ color: 0x2a1a0a })); holeM.rotation.x = -Math.PI / 2; holeM.position.y = .04; scene.add(holeM);
-      const lag = new T.Mesh(new T.PlaneGeometry(26, .5), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .6 })); lag.rotation.x = -Math.PI / 2; lag.position.set(0, .03, LAG_LINE + 2); scene.add(lag); S.lagLine = lag;
-      S.aimLine = new T.Mesh(new T.PlaneGeometry(.5, 1), new T.MeshBasicMaterial({ color: 0xc8ff2e, transparent: true, opacity: .85 })); S.aimLine.rotation.x = -Math.PI / 2; S.aimLine.visible = false; scene.add(S.aimLine);
-      S.puffM = new T.InstancedMesh(new T.SphereGeometry(.5, 6, 5), new T.MeshBasicMaterial({ color: new T.Color(surf.dust), transparent: true, opacity: .55 }), 200); scene.add(S.puffM);
-      S.say(''); setup(); S.loop(step);
+      for (const [px, pz, ry, w] of [[0, -95, 0, 200], [-95, 0, Math.PI / 2, 200], [95, 0, Math.PI / 2, 200]]) { const wl = new T.Mesh(new T.BoxGeometry(w, 40, 4), wallM); wl.position.set(px, 20, pz); wl.rotation.y = ry; scene.add(wl); }
+      for (const [px, col] of [[-40, 0x2a7ad8], [30, 0x2ea86a]]) { const door = new T.Mesh(new T.BoxGeometry(18, 30, 1), new T.MeshStandardMaterial({ color: col })); door.position.set(px, 15, -92.8); scene.add(door); }
+      // the chalk ring with a small chalk cross at its centre (not a black dot: the hole only exists in the hole games)
+      ringM = new T.Mesh(new T.RingGeometry(RING - .25, RING + .25, 128), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .85 })); ringM.rotation.x = -Math.PI / 2; ringM.position.y = .03; scene.add(ringM);
+      crossM = new T.Group(); for (const r of [0, Math.PI / 2]) { const bar = new T.Mesh(new T.PlaneGeometry(2.4, .3), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .7 })); bar.rotation.set(-Math.PI / 2, 0, r); bar.position.y = .03; crossM.add(bar); } scene.add(crossM);
+      // the hole: a dark pit with depth, a lip of loosened dirt around it
+      holeG = new T.Group(); const pit = new T.Mesh(new T.CylinderGeometry(HOLE, HOLE * .8, 2.2, 28, 1, true), new T.MeshStandardMaterial({ color: 0x3a2412, side: T.BackSide, roughness: 1 })); pit.position.y = -1.1; holeG.add(pit);
+      const bottom = new T.Mesh(new T.CircleGeometry(HOLE * .8, 24), new T.MeshBasicMaterial({ color: 0x120a04 })); bottom.rotation.x = -Math.PI / 2; bottom.position.y = -2.15; holeG.add(bottom);
+      const lip = new T.Mesh(new T.TorusGeometry(HOLE + .35, .45, 8, 28), new T.MeshStandardMaterial({ color: new T.Color(surf.col).offsetHSL(0, 0, -.12), roughness: 1 })); lip.rotation.x = Math.PI / 2; lip.position.y = .05; holeG.add(lip); scene.add(holeG);
+      // cut the ground open over the hole so the pit is visible
+      ground.material.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <dithering_fragment>', '#include <dithering_fragment>\n'); };
+      const cover = new T.Mesh(new T.RingGeometry(HOLE, HOLE + .05, 28), new T.MeshBasicMaterial({ color: 0x000000 })); cover.visible = false; holeG.add(cover);
+      lineM = new T.Mesh(new T.PlaneGeometry(52, .35), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .75 })); lineM.rotation.x = -Math.PI / 2; lineM.position.set(0, .03, LINE + TR + .5); scene.add(lineM);
+      S.aimLine = new T.Mesh(new T.PlaneGeometry(.35, 1), new T.MeshBasicMaterial({ color: 0xc8ff2e, transparent: true, opacity: .85 })); S.aimLine.rotation.x = -Math.PI / 2; S.aimLine.visible = false; scene.add(S.aimLine);
+      S.puffM = new T.InstancedMesh(new T.SphereGeometry(.4, 6, 5), new T.MeshBasicMaterial({ color: new T.Color(surf.dust), transparent: true, opacity: .55 }), 200); scene.add(S.puffM);
+      // the ground has to have a real hole for the pit to show: punch it with a stencil-free trick, a ground made of a ring + outer plane
+      scene.remove(ground); const gShape = new T.Shape(); gShape.moveTo(-110, -110); gShape.lineTo(110, -110); gShape.lineTo(110, 110); gShape.lineTo(-110, 110); gShape.lineTo(-110, -110); const hp = new T.Path(); hp.absarc(0, 0, HOLE, 0, Math.PI * 2, true); gShape.holes.push(hp);
+      const g2 = new T.Mesh(new T.ShapeGeometry(gShape, 48), ground.material); g2.rotation.x = -Math.PI / 2; g2.receiveShadow = true; const uv = g2.geometry.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, (uv.getX(i) + 110) / 220, (uv.getY(i) + 110) / 220); scene.add(g2);
+      const g3 = new T.Mesh(new T.CircleGeometry(HOLE, 28), ground.material); g3.rotation.x = -Math.PI / 2; g3.position.y = .001; scene.add(g3); S.holeCap = g3;
+      S.say(''); dressCourt(); setup(); S.loop(step);
     }
-    const tmp = {};
+    const camT = { x: 0, z: 0, tx: 0, tz: LINE, h: 30 };
+    function focusOn(m) { camT.sx = m.x; camT.sz = m.z; }
+    let sayEl;
+    function say(html, secs) { overlay = html; overlayT = secs; }
     function step(dt) {
       if (!scene) return;
-      const sub = 6; if (moving) { for (let k = 0; k < sub; k++) physics(dt / sub); if (marbles.every(m => m.out || !m.mesh.visible || Math.hypot(m.vx, m.vz) < .05)) { marbles.forEach(m => { m.vx = m.vz = 0; }); settle(); } }
-      if (!moving && cpuT > 0 && (phase === 'play' || phase === 'lag')) { cpuT -= dt; const p = phase === 'lag' ? players[lagList.length] : curP(); if (cpuT <= 0 && p && p.cpu && !meas) cpuShot(p); }
-      if (meas) meas.t -= dt;
-      ringLine.visible = mode === 'ring' && phase === 'play'; S.lagLine.visible = phase === 'lag';
-      for (const m of marbles) { if (m.out) continue; m.mesh.position.set(m.x, m.r, m.z); m.mesh.rotation.set(m.rx, 0, m.rz); }
-      // aim guide
-      if (aim && aim.w && cur && !aim.slide) { const dx = aim.w0.x - aim.w.x, dz = aim.w0.z - aim.w.z, d = Math.hypot(dx, dz), pow = clamp(d / 22, 0, 1), L = 6 + pow * 28; S.aimLine.visible = d > 1.5; S.aimLine.scale.set(1, L, 1); const a = Math.atan2(dz, dx); S.aimLine.position.set(cur.x + Math.cos(a) * L / 2, .05, cur.z + Math.sin(a) * L / 2); S.aimLine.rotation.z = -a - Math.PI / 2; S.aimLine.material.color.setHSL(.25 - pow * .25, 1, .55); } else S.aimLine.visible = false;
-      // dust puffs
+      if (moving) { const sub = 6; for (let k = 0; k < sub; k++) physics(dt / sub); if (marbles.every(m => m.inHole || Math.hypot(m.vx, m.vz) < .05)) settled(); }
+      if (!moving && cpuT > 0) { cpuT -= dt; if (cpuT <= 0 && !humanTurn() && ['lag', 'scatter', 'shot'].includes(phase)) cpuShot(); }
+      S.holeCap.visible = mode === 'qaz';
+      lineM.visible = phase !== 'setup';
+      for (const m of marbles) { m.mesh.position.set(m.x, m.inHole ? -1.4 : m.r, m.z); m.mesh.children[0].rotation.set(m.rx, 0, m.rz); if (!m.taw) m.mesh.rotation.set(m.rx, 0, m.rz); }
+      // aim guide from the shooter (or from the hand when scattering)
+      if (aim && aim.w && cur && !aim.slide) { const dx = aim.w0.x - aim.w.x, dz = aim.w0.z - aim.w.z, d = Math.hypot(dx, dz), pow = clamp(d / 18, 0, 1), L = 4 + pow * 40; S.aimLine.visible = d > 1; S.aimLine.scale.set(1, L, 1); const a = Math.atan2(dz, dx); S.aimLine.position.set(cur.x + Math.cos(a) * L / 2, .06, cur.z + Math.sin(a) * L / 2); S.aimLine.rotation.z = -a - Math.PI / 2; S.aimLine.material.color.setHSL(.25 - pow * .25, 1, .55); } else S.aimLine.visible = false;
       const T = T3, M = new T.Matrix4(); puffs = puffs.filter(p => (p.l -= dt) > 0); puffs.forEach((p, i) => { p.vy -= 20 * dt; p.x += p.vx * dt; p.y = Math.max(.2, p.y + p.vy * dt); p.z += p.vz * dt; const s = 1 + (1 - p.l) * 2; M.makeScale(s, s, s).setPosition(p.x, p.y, p.z); if (i < 200) S.puffM.setMatrixAt(i, M); }); S.puffM.count = Math.min(200, puffs.length); S.puffM.instanceMatrix.needsUpdate = true;
-      // camera: over the shooter's shoulder toward the play area
-      const focus = phase === 'lag' ? { x: 0, z: LAG_LINE * .5 } : { x: 0, z: 0 }, dist = phase === 'lag' ? 46 : mode === 'ring' ? 58 : 50;
-      camT.x += (focus.x - camT.x) * Math.min(1, dt * 2); camT.z += (focus.z - camT.z) * Math.min(1, dt * 2);
-      cam.position.set(camT.x + Math.sin(yaw) * dist * .78, dist * .62, camT.z + Math.cos(yaw) * dist * .78); cam.lookAt(camT.x, 0, camT.z);
+      // camera: behind the shooter, looking over it at the ring / hole; pulls back while marbles roll
+      const sx = camT.sx ?? 0, sz = camT.sz ?? LINE, portrait = S.H > S.W * 1.2, back = (moving ? 40 : 26) * (portrait ? 1.15 : 1), height = (moving ? 58 : 46) * (portrait ? 1.25 : 1);
+      const aimAng = Math.atan2(-sz, -sx) + yaw, cx = sx - Math.cos(aimAng) * back, cz = sz - Math.sin(aimAng) * back;
+      camT.x += (cx - camT.x) * Math.min(1, dt * 2.5); camT.z += (cz - camT.z) * Math.min(1, dt * 2.5); camT.h += (height - camT.h) * Math.min(1, dt * 2.5);
+      cam.position.set(camT.x, camT.h, camT.z); cam.lookAt(sx * .45, 0, sz * .45 - 2);   // frame both the shooter and the ring / hole, also on a tall phone
       S.renderer.render(scene, cam);
-      // hand-span measurement overlay (close lag)
-      const p = phase === 'lag' ? players[lagList.length] : players.length ? curP() : null;
-      S.set('Turn', p ? p.name : '–'); S.set('Mode', { ring: 'Ring', hole: 'Hole', called: 'Called shot' }[mode]); S.set('Left', phase === 'lag' ? 'Lag' : mode === 'hole' ? players.filter(o => o.alive).length + ' in' : marbles.filter(m => !m.taw && !m.owner && !m.out).length);
+      if (overlayT > 0) { overlayT -= dt; } if (!sayEl) { sayEl = document.createElement('div'); sayEl.style.cssText = 'position:absolute;left:10px;right:10px;top:38px;z-index:3;pointer-events:none;font-weight:900;font-size:.88rem;line-height:1.35;text-align:center;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.6);background:rgba(20,12,4,.45);border-radius:12px;padding:6px 8px'; S.wrap.append(sayEl); }
+      const show = overlayT > 0 ? overlay : ''; if (sayEl.innerHTML !== show) sayEl.innerHTML = show; sayEl.style.display = show ? '' : 'none';
+      const p = phase === 'lag' || phase === 'lagroll' ? players[Math.min(lagDone.length, players.length - 1)] : phase === 'scatter' || phase === 'scattering' ? players[order[scatterI % order.length]] : order.length ? curP() : null;
+      S.set('Turn', p ? p.name : '–'); S.set('Pot', pot ? `${pot} 🔮` : '–'); S.set('Round', `${round}/${cfg.rounds} · you ${players[0] ? players[0].bank : 0}`);
     }
-    // hand-span measurement: drawn as a DOM overlay so it reads clearly over the 3D
-    const mEl = document.createElement('div'); mEl.style.cssText = 'position:absolute;left:10px;right:10px;bottom:10px;z-index:3;pointer-events:none;font-weight:900;font-size:.85rem;text-align:center;color:#2a1a0a;text-shadow:0 1px 0 rgba(255,255,255,.6)'; S.wrap.append(mEl);
-    const mIv = setInterval(() => { if (S.dead) return; if (meas && meas.t > 0) { const span = 2.3; mEl.innerHTML = `✋ ${meas.a.p.name}: ${(meas.a.d / span).toFixed(1)} spans &nbsp;·&nbsp; ✋ ${meas.b.p.name}: ${(meas.b.d / span).toFixed(1)} spans<br>${meas.a.p.name} shoots first!`; } else mEl.textContent = ''; }, 200);
     init();
-    window.__ft = { get marbles() { return marbles; }, get phase() { return phase; }, get players() { return players; }, start };
-    S.onDestroy(() => { clearInterval(mIv); delete window.__ft; });
+    window.__ft = { get marbles() { return marbles; }, get phase() { return phase; }, get players() { return players; }, startMatch, cpuShot, get mode() { return mode; } };
+    S.onDestroy(() => { delete window.__ft; });
     return { destroy: S.destroy };
   },
 });
@@ -14740,7 +14810,7 @@ Arcade.css('skirun', `.sk { flex: 1; min-height: 0; display: flex; flex-directio
 .sk-cv { flex: 1; min-height: 0; width: 100%; display: block; border-radius: 14px; touch-action: none; background: #f7f9ff; }`);
 const DEG = Math.PI / 180, ANG = [-75, -50, -25, 0, 25, 50, 75], SPD = [.18, .5, .82, 1, .82, .5, .18];
 const LIVES = 3;
-const MODES = [{ id: 'classic', label: 'Classic', tip: 'Ski as far as you can. Rivals from 600 m, the avalanche from 1000 m, a yeti from 1300 m…' }, { id: 'slalom', label: 'Slalom', tip: 'Pass between 25 gates. Misses cost 5 s' }, { id: 'free', label: 'Freestyle', tip: '90 seconds of ramps. Tap in the air for tricks' }, { id: 'zen', label: 'Zen', tip: 'Gentle slope, no avalanche, no clock' }];
+const MODES = [{ id: 'classic', label: 'Classic', tip: 'Ski as far as you can. Rivals from 600 m, the avalanche from 1000 m (hide in a rock shelter), a yeti from 1300 m…' }, { id: 'slalom', label: 'Slalom', tip: 'Pass between 25 gates. Misses cost 5 s' }, { id: 'free', label: 'Freestyle', tip: '90 seconds of ramps. Tap in the air for tricks' }, { id: 'zen', label: 'Zen', tip: 'Gentle slope, no avalanche, no clock' }];
 function tree(c, x, y, s, snow) {
   c.fillStyle = 'rgba(70,90,140,.18)'; c.beginPath(); c.ellipse(x + 4 * s, y + 2 * s, 12 * s, 4 * s, 0, 0, 7); c.fill();
   c.fillStyle = '#6b4226'; c.fillRect(x - 2 * s, y - 5 * s, 4 * s, 7 * s);
@@ -14808,18 +14878,21 @@ Arcade.register({
     }
     const R = (a, b) => a + Math.random() * (b - a);
     function spawnTo(y) {
-      while (st.nextSpawn < y) {
-        const yy = st.nextSpawn, dist = yy / 16, dens = mode === 'zen' ? .5 : Math.min(1.6, .7 + dist / 2500);
-        const n = Math.round(R(1, 3) * dens);
+      const TW = 200, TH = mode === 'free' ? 70 : 90; st.tiles = st.tiles || new Set();
+      for (let ty = Math.floor((st.y - H * .4) / TH); ty * TH < y; ty++) for (let tx = Math.floor((st.x - W * 1.1) / TW); tx * TW < st.x + W * 1.1; tx++) {
+        const key = tx + ',' + ty; if (st.tiles.has(key) || ty < 0) continue; st.tiles.add(key);
+        const yy = ty * TH, dist = yy / 16, dens = mode === 'zen' ? .5 : Math.min(1.6, .7 + dist / 2500);
+        const n = Math.round(R(.6, 2.2) * dens * TW / (W * 1.8) * 2);
+        if (mode === 'classic' && dist > 900 && Math.random() < .035) objs.push({ k: Math.random() < .5 ? 'pboost' : 'pshield', x: tx * TW + R(20, TW - 20), y: yy + R(0, TH), s: 1 });
         for (let i = 0; i < n; i++) {
-          const x = st.x + R(-W * .9, W * .9), r = Math.random();
+          const x = tx * TW + R(0, TW), r = Math.random();
           let k = mode === 'free' ? (r < .3 ? 'ramp' : r < .55 ? 'mogul' : r < .85 ? 'tree' : 'rock') : r < .45 ? 'tree' : r < .55 ? 'bigtree' : r < .66 ? 'rock' : r < .74 ? 'stump' : r < .88 ? 'mogul' : r < .95 ? 'ramp' : 'npc';
           if (mode === 'zen' && (k === 'npc' || k === 'rock')) k = 'mogul';
           if (yy < 260 && Math.abs(x - st.x) < 60) continue;
           objs.push({ k, x, y: yy + R(0, 60), s: R(.85, 1.25), vx: k === 'npc' ? R(-40, 40) : 0, col: OUTFITS[Math.floor(Math.random() * OUTFITS.length)] });
         }
-        st.nextSpawn += mode === 'free' ? 70 : 90;
       }
+      if (st.tiles.size > 4000) st.tiles = new Set([...st.tiles].slice(-2000));
       if (mode === 'slalom') while (st.gateN < 25 && st.gateY < y) { const cx = st.x * .3 + R(-W * .3, W * .3); objs.push({ k: 'gate', x: cx, y: st.gateY, w: 70, n: st.gateN, col: st.gateN % 2 ? '#2a5bd7' : '#ff5e6c' }); objs = objs.filter(o => o.k === 'gate' || Math.abs(o.y - st.gateY) > 40 || Math.abs(o.x - cx) > 60); st.gateN++; st.gateY += 380; }
     }
     function hud() {
@@ -14860,7 +14933,7 @@ Arcade.register({
     const up = () => { steer = null; }; cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
     const kd = e => { if (st.state === 'down' && st.downT <= .6 && !st.over && ['ArrowLeft', 'ArrowRight', 'ArrowDown', ' '].includes(e.key)) { getUp(); e.preventDefault(); return; } if (e.key === 'ArrowLeft') { st.dir = Math.max(0, st.dir - 1); e.preventDefault(); } else if (e.key === 'ArrowRight') { st.dir = Math.min(6, st.dir + 1); e.preventDefault(); } else if (e.key === 'ArrowDown') { st.dir = 3; e.preventDefault(); } else if (e.key === ' ' && st.state === 'air') { st.trick++; st.spin = 1; e.preventDefault(); } };
     addEventListener('keydown', kd);
-    const hit = (o, x, y) => { const r = { tree: [9, 6], bigtree: [12, 8], rock: [11, 6], stump: [7, 5], npc: [7, 8], chaser: [8, 8], yeti: [12, 12], mogul: [14, 5], ramp: [16, 6] }[o.k]; return r && Math.abs(o.x - x) < r[0] * (o.s || 1) && Math.abs(o.y - y) < r[1] * (o.s || 1); };
+    const hit = (o, x, y) => { const r = { pboost: [12, 12], pshield: [12, 12], cave: [24, 14], tree: [9, 6], bigtree: [12, 8], rock: [11, 6], stump: [7, 5], npc: [7, 8], chaser: [8, 8], yeti: [12, 12], mogul: [14, 5], ramp: [16, 6] }[o.k]; return r && Math.abs(o.x - x) < r[0] * (o.s || 1) && Math.abs(o.y - y) < r[1] * (o.s || 1); };
     function step(dt) {
       if (st.over) return;
       st.time += dt;
@@ -14868,7 +14941,8 @@ Arcade.register({
       if (st.safeT > 0) st.safeT -= dt;
       if (st.state === 'down') { st.downT -= dt; if (st.downT <= 0) getUp(); }
       const vmax = mode === 'zen' ? 300 : 360 + Math.min(220, st.y / 16 / 12);
-      if (st.state === 'ski') { st.v += (vmax * SPD[st.dir] - st.v) * Math.min(1, dt * (SPD[st.dir] > st.v / vmax ? 1.2 : 3)); }
+      if (st.boost > 0) st.boost -= dt;
+      if (st.state === 'ski') { st.v += (vmax * SPD[st.dir] * (st.boost > 0 ? 1.35 : 1) - st.v) * Math.min(1, dt * (SPD[st.dir] > st.v / vmax ? 1.2 : 3)); }
       if (st.state === 'air') { st.airT += dt; if (st.airT >= st.airMax) { st.state = 'ski'; if (st.trick) { const p = st.trick * 50 + (st.trick > 2 ? 100 : 0); st.style += p; api.toast(`${st.trick} trick${st.trick > 1 ? 's' : ''} · +${p}`); api.tone(660, { dur: .1, vol: .06 }); st.trick = 0; } } }
       const a = ANG[st.dir] * DEG;
       if (st.state !== 'down') { st.x += Math.sin(a) * st.v * dt; st.y += Math.cos(a) * st.v * dt; }
@@ -14892,13 +14966,17 @@ Arcade.register({
         o.dir = Math.max(0, Math.min(6, Math.round(Math.sin(ang) * 3) + 3));
         if (o.life <= 0 && dy < -H * .5) o.y = -1e9;   // gave up and dropped back
       });
-      objs = objs.filter(o => o.y > st.y - H * .5 || ((o.k === 'chaser' || o.k === 'yeti') && o.y > -1e8 && o.life > -3));
+      objs = objs.filter(o => (o.y > st.y - H * .5 && Math.abs(o.x - st.x) < W * 1.6) || ((o.k === 'chaser' || o.k === 'yeti') && o.y > -1e8 && o.life > -3));
       if (st.state === 'ski') for (const o of objs) {
         if (o.k === 'gate' || o.hit) continue;
         if (st.safeT > 0 && o.k !== 'ramp' && o.k !== 'mogul') continue;
         if (!hit(o, st.x, st.y)) continue;
         if (o.k === 'ramp') { o.hit = 1; st.state = 'air'; st.airT = 0; st.airMax = .35 + st.v / 500; st.trick = 0; api.tone(300, { type: 'triangle', dur: .2, slide: 2, vol: .07 }); break; }
+        if (o.k === 'pboost') { o.hit = 1; st.boost = 3; api.toast('Speed boost!'); api.tone(880, { type: 'triangle', dur: .12, vol: .07 }); continue; }
+        if (o.k === 'pshield') { o.hit = 1; st.helmet = true; api.toast('Helmet: survives one crash'); api.tone(660, { type: 'triangle', dur: .12, vol: .07 }); continue; }
+        if (o.k === 'cave') { if (yt && !yt.eat && !st.sheltered) { st.sheltered = true; st.state = 'shelter'; st.v = 0; st.x = o.x; st.y = o.y; api.toast('Hide! Wait for the wave to pass'); api.tone(220, { dur: .3, vol: .07 }); } continue; }
         if (o.k === 'mogul') { o.hit = 1; st.v *= .6; if (st.v > 200 && Math.random() < .3) { st.state = 'air'; st.airT = 0; st.airMax = .3; } continue; }
+        if (st.helmet) { st.helmet = false; o.hit = 1; st.v *= .5; st.safeT = 1; api.toast('The helmet saved you!'); continue; }
         crash(o.k === 'npc' ? 'Collision!' : null, o); if (mode === 'free') st.style = Math.max(0, st.style - 50); break;
       }
       // slalom gates
@@ -14906,12 +14984,15 @@ Arcade.register({
       if (mode === 'free' && st.time >= 90) finish('Time!', `<p><span class="big">${st.style} pts</span></p><p>${Math.floor(st.y / 16)} m skied</p>`, st.style);
       // the avalanche: past 2000 m the slope lets go above you and the wall chases you down the mountain
       const m = st.y / 16;
-      if (mode === 'classic' && !yt && !st.fence && m > 1000 && (st.avT = (st.avT ?? 10) - dt) <= 0) { yt = { y: st.y - H * .65, t: 0 }; shakeT = 1.2; api.tone(60, { type: 'sawtooth', dur: 1.4, slide: .8, vol: .12 }); api.noise(1.2, .12, 160); api.toast('AVALANCHE! Straight down!'); api.haptic([60, 40, 60]); }
+      if (mode === 'classic' && !yt && !st.fence && m > 1000 && (st.avT = (st.avT ?? 10) - dt) <= 0) { yt = { y: st.y - H * .8, t: 0 }; st.sheltered = false; for (const d of [260, 520]) objs.push({ k: 'cave', x: st.x + R(-W * .35, W * .35), y: st.y + d * 16 / 16 * 3, s: 1 }); shakeT = 1.2; api.tone(60, { type: 'sawtooth', dur: 1.4, slide: .8, vol: .12 }); api.noise(1.2, .12, 160); api.toast('AVALANCHE! Straight down!'); api.haptic([60, 40, 60]); }
       if (yt && !yt.eat) {
-        yt.t += dt; const sp = Math.min(vmax * .95, 140 + yt.t * 22 + Math.min(60, (m - 1000) / 20)); yt.y += sp * dt;
+        yt.t += dt; const gap = st.y - yt.y, sp = st.sheltered ? 320 : Math.max(60, Math.min(vmax * .82, (st.v || 0) * .9 + (gap > H * .5 ? 60 : 10) + yt.t * 3)); yt.y += sp * dt;   // it creeps in when you slow down and lets you pull away at full speed
         if (yt.y < st.y - H * .9) yt.y = st.y - H * .9; // it never falls far out of sight
+        if (st.sheltered && yt.y > st.y + H * .6) { yt = null; st.sheltered = false; st.state = 'ski'; st.avT = 25; st.safeT = 1; api.toast('The avalanche passed over you! Keep going'); api.tone(660, { dur: .15, vol: .07 }); api.tone(880, { dur: .2, vol: .07, delay: .12 }); }
+      }
+      if (yt && !yt.eat && !st.sheltered) {
         if (yt.y > st.y - H * .35 && Math.random() < dt * 3) { shakeT = Math.max(shakeT, .25); }
-        if (yt.y >= st.y - 6) { yt.eat = 1; st.state = 'down'; st.v = 0; shakeT = 1; api.noise(1, .2, 200); api.tone(70, { type: 'sawtooth', dur: 1, slide: .5, vol: .14 }); const dist = Math.floor(m); finish('Buried by the avalanche', `<p><span class="big">${dist} m</span></p><p>Style ${st.style}. Tip: straight down is fastest, and ramps cost you speed.</p>`, dist); }
+        if (yt.y >= st.y - 6 && !st.sheltered) { yt.eat = 1; st.state = 'down'; st.v = 0; shakeT = 1; api.noise(1, .2, 200); api.tone(70, { type: 'sawtooth', dur: 1, slide: .5, vol: .14 }); const dist = Math.floor(m); finish('Buried by the avalanche', `<p><span class="big">${dist} m</span></p><p>Style ${st.style}. Tip: straight down is fastest, and ramps cost you speed.</p>`, dist); }
       }
       if (yt && yt.eat) yt.t += dt;
     }
@@ -14942,6 +15023,8 @@ Arcade.register({
         else if (o.k === 'npc') skier(g, x, y, 3 + Math.sign(o.vx), 'ski', 0, o.col);
         else if (o.k === 'chaser') { skier(g, x, y, o.dir, 'ski', 0, o.col); g.fillStyle = '#ff4a57'; g.font = '900 9px Nunito, sans-serif'; g.textAlign = 'center'; g.fillText('RIVAL', x, y - 24); }
         else if (o.k === 'yeti') yetiArt(g, x, y, S_t);
+        else if (o.k === 'pboost' || o.k === 'pshield') { const bob = Math.sin(S_t * 4 + o.x) * 2; g.fillStyle = o.k === 'pboost' ? '#ffb627' : '#36e0ff'; g.beginPath(); g.arc(x, y - 10 + bob, 9, 0, 7); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2; g.stroke(); g.fillStyle = '#141a22'; g.font = '900 11px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(o.k === 'pboost' ? '»' : '⛑', x, y - 9 + bob); g.textBaseline = 'alphabetic'; }
+        else if (o.k === 'cave') { g.fillStyle = 'rgba(70,90,140,.25)'; g.beginPath(); g.ellipse(x + 6, y + 6, 46, 12, 0, 0, 7); g.fill(); g.fillStyle = '#6a7080'; g.beginPath(); g.moveTo(x - 46, y + 4); g.quadraticCurveTo(x - 40, y - 46, x, y - 50); g.quadraticCurveTo(x + 44, y - 46, x + 46, y + 4); g.lineTo(x + 24, y + 4); g.quadraticCurveTo(x, y - 30, x - 24, y + 4); g.closePath(); g.fill(); g.fillStyle = '#f4f8ff'; g.beginPath(); g.ellipse(x - 4, y - 46, 34, 8, 0, 0, 7); g.fill(); g.fillStyle = '#1c2030'; g.beginPath(); g.moveTo(x - 24, y + 4); g.quadraticCurveTo(x, y - 30, x + 24, y + 4); g.fill(); if (yt && !yt.eat) { g.fillStyle = '#ff4a57'; g.font = '900 10px Nunito, sans-serif'; g.textAlign = 'center'; g.fillText('SHELTER ▼', x, y - 58); } }
         else if (o.k === 'gate') { for (const s of [-1, 1]) { g.fillStyle = '#555'; g.fillRect(x + s * o.w / 2 - 1, y - 18, 2, 18); g.fillStyle = o.done ? '#aab' : o.col; g.beginPath(); g.moveTo(x + s * o.w / 2, y - 18); g.lineTo(x + s * o.w / 2 + 10 * -s, y - 14); g.lineTo(x + s * o.w / 2, y - 10); g.fill(); } }
       }
       if (!skDrawn) drawSkier();
@@ -20670,7 +20753,7 @@ Arcade.register({
   }),
   mount(root, api) {
     Arcade.css('sowstones', `.ss { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; justify-content: center; align-items: center; }
-.ss-board { position: relative; width: min(100%, 560px); aspect-ratio: 1 / 1.9; max-height: 100%; background: linear-gradient(160deg, #6b4a2a, #4a3018); border-radius: 30px; box-shadow: 6px 6px 0 rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.15); display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto repeat(6, 1fr) auto; gap: 8px; padding: 14px; box-sizing: border-box; direction: ltr; }
+.ss-board { position: relative; flex: 1 1 0; min-height: 0; max-width: min(100%, 560px); aspect-ratio: 1 / 1.9; background: linear-gradient(160deg, #6b4a2a, #4a3018); border-radius: 30px; box-shadow: 6px 6px 0 rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.15); display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto repeat(6, 1fr) auto; gap: 8px; padding: 14px; box-sizing: border-box; direction: ltr; }
 @media (min-aspect-ratio: 1/1) { .ss-board { aspect-ratio: auto; height: 100%; } }
 .ss-store { grid-column: 1 / -1; min-height: 64px; border-radius: 24px; background: #2e1d0e; box-shadow: inset 0 4px 10px rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; gap: 10px; position: relative; color: #ffe2b0; font-family: var(--display); font-size: 1.6rem; }
 .ss-store small { font-family: var(--body); font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 800; opacity: .7; }
@@ -20684,7 +20767,7 @@ Arcade.register({
 .ss-bar { display: flex; gap: 8px; width: min(100%, 560px); align-items: center; }
 .ss-msg { flex: 1; font-weight: 800; font-size: .9rem; color: var(--ink); min-height: 2.4em; display: flex; align-items: center; }
 .ss-bar .tool { min-height: 44px; }`);
-    root.innerHTML = `<div class="ss"><div class="ss-goal" style="font-size:.8rem;font-weight:800;text-align:center;padding:6px 10px;border-radius:10px;background:rgba(200,255,46,.12);color:#c8ff2e">GOAL: get more stones into YOUR store (bottom) than the computer gets in its store (top)</div><div class="ss-bar"><span class="ss-msg" id="ssMsg"></span><button class="tool" id="ssWhy" type="button">Why?</button></div><div class="ss-board" id="ssB"></div></div>`;
+    root.innerHTML = `<div class="ss"><div class="ss-goal" style="font-size:.72rem;flex:none;font-weight:800;text-align:center;padding:6px 10px;border-radius:10px;background:rgba(200,255,46,.12);color:#c8ff2e">GOAL: get more stones into YOUR store (bottom) than the computer gets in its store (top)</div><div class="ss-bar"><span class="ss-msg" id="ssMsg"></span><button class="tool" id="ssWhy" type="button">Why?</button></div><div class="ss-board" id="ssB"></div></div>`;
     const q = s => root.querySelector(s), B = q('#ssB'), msg = t => { q('#ssMsg').textContent = t; };
     const save = api.save.get();
     let lvl = save.lvl || 'medium', seeds = save.seeds || 4, board, turn, busy, last = -1, dead = false, hintPit = -1;
@@ -22531,23 +22614,32 @@ const MATS = [[1, 'Concrete', '#8c9bad', 0], [1.7, 'Iron', '#5c6575', 200], [2.4
 const KIND = { brick: ['#c0583a', 1, 1, 2.2], brick2: ['#a84a32', 1, 1, 2.2], glass: ['#8fd8ff', 3, .5, 1], concrete: ['#a8acb4', 1, 1.6, 3.2], car: ['#ff4a57', 4, .7, 1.4], car2: ['#36e0ff', 4, .7, 1.4], car3: ['#ffd23f', 4, .7, 1.4], tire: ['#1b1b22', 2, .8, 1.4],
   desk: ['#8a5a32', 2, .7, 1.2], pc: ['#2a3544', 5, .4, .8], screen: ['#36e0ff', 5, .3, .8], chair: ['#ff8a4c', 2, .4, .8], cake: ['#ff9de0', 3, .4, .8], cream: ['#fff6ee', 3, .4, .8], cherry: ['#ff2a3a', 8, .2, .6],
   potty: ['#2a7ad8', 3, .5, .9], duck: ['#ffd23f', 6, .2, .5], beam: ['#ffb627', 1, 2, 4], roof: ['#4b5260', 1, 1.2, 2.5] };
+/* The crane stands in the middle; three structures stand around it (left, ahead, right) so a sideways swing smashes them.
+   Grid offsets are in blocks (a block is half a metre). */
+const GROUPS = [[-11, -2], [0, -14], [11, -2]];
 function buildSite(n) {
-  const B = [], add = (i, j, k, kind) => B.push({ i, j, k, kind });
-  const site = ['wall', 'tower', 'cars', 'office', 'silly'][n % 5], grow = Math.floor(n / 5);
-  if (site === 'wall') { const w = 12 + grow * 2, h = 6 + grow; for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) for (let k = 0; k < 2; k++) add(i - w / 2, j, k, (i + j) % 2 ? 'brick' : 'brick2'); }
-  else if (site === 'tower') { const w = 6, d = 4, h = 14 + grow * 3; for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) for (let k = 0; k < d; k++) { const edge = i === 0 || i === w - 1 || k === 0 || k === d - 1; if (!edge && j % 4) continue; const win = edge && j % 4 && (i % 2 || k % 2) && !(i === 0 || i === w - 1) ; add(i - w / 2, j, k - d / 2, j % 4 === 0 ? 'concrete' : win ? 'glass' : 'concrete'); } }
-  else if (site === 'cars') { const n2 = 3 + Math.min(3, grow); for (let c = 0; c < n2; c++) { const x0 = -8 + c * 5.5 / 1, kind = ['car', 'car2', 'car3'][c % 3]; for (let i = 0; i < 8; i++) for (let k = 0; k < 4; k++) { add(x0 + i, 1, k - 2, kind); if (i > 1 && i < 6) add(x0 + i, 2, k - 2, i === 2 || i === 5 ? 'glass' : kind); } for (const [i, k] of [[1, -2], [6, -2], [1, 1], [6, 1]]) add(x0 + i, 0, k, 'tire'); } }
-  else if (site === 'office') { const floors = 3 + Math.min(3, grow), w = 12, d = 6; for (let f = 0; f < floors; f++) { const y = f * 4; for (let i = 0; i < w; i++) for (let k = 0; k < d; k++) add(i - w / 2, y, k - d / 2, 'concrete'); for (const [i, k] of [[0, 0], [w - 1, 0], [0, d - 1], [w - 1, d - 1], [Math.floor(w / 2), 0], [Math.floor(w / 2), d - 1]]) for (let j = 1; j < 4; j++) add(i - w / 2, y + j, k - d / 2, 'beam'); for (let s = 0; s < 4; s++) { const i = 2 + s * 2, k = 1 + (s % 2) * 2; add(i - w / 2, y + 1, k - d / 2, 'desk'); add(i + 1 - w / 2, y + 1, k - d / 2, 'desk'); add(i - w / 2, y + 2, k - d / 2, 'pc'); add(i + 1 - w / 2, y + 2, k - d / 2, 'screen'); add(i - w / 2, y + 1, k + 1 - d / 2, 'chair'); } } for (let i = 0; i < w; i++) for (let k = 0; k < d; k++) add(i - w / 2, floors * 4, k - d / 2, 'roof'); }
-  else { const v = grow % 2; if (!v) { const tiers = [[10, 3], [8, 3], [6, 3], [4, 2]]; let y = 0; tiers.forEach(([w, h], t) => { for (let j = 0; j < h; j++) { for (let i = 0; i < w; i++) for (let k = 0; k < w; k++) { const edge = i === 0 || k === 0 || i === w - 1 || k === w - 1; if (!edge && j < h - 1) continue; add(i - w / 2, y + j, k - w / 2, j === h - 1 ? 'cream' : 'cake'); } } y += h; }); add(0, y, 0, 'cherry'); add(-1, y, 0, 'cherry'); }
-    else { for (let p = 0; p < 6; p++) for (let j = 0; j < 5; j++) for (let i = 0; i < 2; i++) for (let k = 0; k < 2; k++) add(p * 3 - 8 + i, j, k - 1, 'potty'); for (let dk = 0; dk < 12; dk++) add(dk - 6, 0, 3, 'duck'); } }
+  const B = [], site = ['wall', 'tower', 'impound', 'office', 'silly'][n % 5], grow = Math.floor(n / 5);
+  GROUPS.forEach(([oi, ok], g) => {
+    const add = (i, j, k, kind) => B.push({ i: i + oi, j, k: k + ok, kind });
+    if (site === 'wall') { const w = 8, h = 6 + grow, d = 2; for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) for (let k = 0; k < d; k++) add(i - w / 2, j, k - 1, (i + j) % 2 ? 'brick' : 'brick2'); }
+    else if (site === 'tower') { const w = 4, d = 4, h = 12 + grow * 2 + g * 2; for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) for (let k = 0; k < d; k++) { const edge = i === 0 || i === w - 1 || k === 0 || k === d - 1; if (!edge && j % 4) continue; add(i - w / 2, j, k - d / 2, j % 4 === 0 ? 'concrete' : (i + k + j) % 2 ? 'glass' : 'concrete'); } }
+    else if (site === 'impound') { // a tower of scrapped cars, stacked crossways like at a car impound
+      const stack = 3 + Math.min(2, grow) + (g === 1 ? 1 : 0); for (let c = 0; c < stack; c++) { const kind = ['car', 'car2', 'car3'][(c + g) % 3], rot = c % 2, y = c * 3, L = 6, Wd = 3;
+        const put = (a, b, j, kd) => rot ? add(b - 1, j, a - 3, kd) : add(a - 3, j, b - 1, kd);
+        for (const [a, b] of [[0, 0], [L - 1, 0], [0, Wd - 1], [L - 1, Wd - 1]]) put(a, b, y, 'tire');
+        for (let a = 0; a < L; a++) for (let b = 0; b < Wd; b++) { put(a, b, y + 1, kind); if (a > 0 && a < L - 1) put(a, b, y + 2, a === 1 || a === L - 2 ? 'glass' : kind); } } }
+    else if (site === 'office') { const floors = 2 + Math.min(3, grow), w = 6, d = 4; for (let fl = 0; fl < floors; fl++) { const y = fl * 4; for (let i = 0; i < w; i++) for (let k = 0; k < d; k++) add(i - w / 2, y, k - d / 2, 'concrete'); for (const [i, k] of [[0, 0], [w - 1, 0], [0, d - 1], [w - 1, d - 1]]) for (let j = 1; j < 4; j++) add(i - w / 2, y + j, k - d / 2, 'beam'); for (let s2 = 0; s2 < 2; s2++) { const i = 1 + s2 * 2; add(i - w / 2, y + 1, 1 - d / 2, 'desk'); add(i + 1 - w / 2, y + 1, 1 - d / 2, 'desk'); add(i - w / 2, y + 2, 1 - d / 2, 'pc'); add(i + 1 - w / 2, y + 2, 1 - d / 2, 'screen'); add(i - w / 2, y + 1, 2 - d / 2, 'chair'); } } for (let i = 0; i < w; i++) for (let k = 0; k < d; k++) add(i - w / 2, floors * 4, k - d / 2, 'roof'); }
+    else { if (g === 1) { const tiers = [[8, 3], [6, 3], [4, 2]]; let y = 0; tiers.forEach(([w, h]) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) for (let k = 0; k < w; k++) { const edge = i === 0 || k === 0 || i === w - 1 || k === w - 1; if (!edge && j < h - 1) continue; add(i - w / 2, y + j, k - w / 2, j === h - 1 ? 'cream' : 'cake'); } y += h; }); add(0, y, 0, 'cherry'); }
+      else { for (let p = 0; p < 2; p++) for (let j = 0; j < 5; j++) for (let i = 0; i < 2; i++) for (let k = 0; k < 2; k++) add(p * 3 - 2 + i, j, k - 1, 'potty'); for (let dk = 0; dk < 6; dk++) add(dk - 3, 0, 2, 'duck'); } }
+  });
   return { B, site };
 }
-const SITE_NAME = { wall: 'Brick wall', tower: 'Office tower', cars: 'Car park', office: 'Call centre', silly: 'Silly stuff' };
+const SITE_NAME = { wall: 'Brick walls', tower: 'Glass towers', impound: 'Car impound', office: 'Call centre', silly: 'Silly stuff' };
 Arcade.register({
   id: 'wreckingball', title: 'Wrecking Ball',
   blurb: '3D demolition: pull back the crane’s wrecking ball and fling it into brick walls, glass towers, parked cars, a call centre and a giant cake. Upgrade the ball.',
   goal: 'Cause as much damage as you can. Big swing mode: reach the target damage within 3 swings. Timed mode: smash as much as possible in 45 seconds. Damage earns coins for a bigger, heavier ball.',
-  controls: 'Drag to pull the ball back and aim (down = pull back toward you, sideways = aim), then let go. A quick flick as you let go adds speed.',
+  controls: 'Grab the ball and throw it: swipe left-to-right (or any way) and let go, and it swings that way into the buildings around the crane. A slow pull-and-release swings it back the other way.',
   stat: s => s.best ? `Best swing ${s.best.toLocaleString()} · ${s.coins || 0} coins` : '',
   icon: icon('#2a3a4a', '#0b0e12', c => {
     c.strokeStyle = '#ffb627'; c.lineWidth = 8; c.beginPath(); c.moveTo(20, 20); c.lineTo(200, 20); c.stroke(); c.strokeStyle = '#8c9bad'; c.lineWidth = 3; c.beginPath(); c.moveTo(150, 20); c.lineTo(100, 120); c.stroke();
@@ -22556,10 +22648,10 @@ Arcade.register({
   }),
   mount(root, api) {
     const S = stage(root, api, { three: true, label: 'Wrecking Ball. Drag to pull the ball back, let go to swing.' });
-    S.hud(['Site', 'Swing', 'Damage', 'Target']); S.say('Loading 3D…');
+    S.hud(['Site', 'Swing', 'Damage', 'Target']); // (site name is announced when it loads) S.say('Loading 3D…');
     let siteName = '', T3, scene, cam, inst, ballM, chainM, crane, blocks, grid, level, mode = ['swing', 'timed'].includes(api.save.get().mode) ? api.save.get().mode : 'swing';
     let sv = api.save.get(), up = { size: sv.size || 0, mat: sv.mat || 0 }, swings = 0, total = 0, swingDmg = 0, totalValue = 1, state = 'aim', settleT = 0, timeLeft = 45, drag = null, shake = 0, msg = '', msgT = 0;
-    const PIV = { x: 0, y: 13, z: 4 }, LEN = 10;
+    const PIV = { x: 0, y: 11.2, z: 0 }, LEN = 10.4;   // the ball hangs in the middle of the yard
     let ball = { x: PIV.x, y: PIV.y - LEN, z: PIV.z, vx: 0, vy: 0, vz: 0 };
     api.setModes({ list: [{ id: 'swing', label: 'Big swing', tip: '3 swings to hit the target damage' }, { id: 'timed', label: 'Timed', tip: '45 seconds of non-stop smashing' }], get: () => mode, set: id => { mode = id; api.save.put({ ...api.save.get(), mode }); load(level); } });
     api.setTools([{ id: 'shop', label: 'Ball shop', onClick: () => shop() }]);
@@ -22578,7 +22670,7 @@ Arcade.register({
     /* ---------- blocks ---------- */
     const key = (i, j, k) => i + ',' + j + ',' + k;
     function load(n) {
-      level = n; const site = buildSite(n); siteName = SITE_NAME[site.site]; { const s0 = api.save.get(); api.save.put({ ...s0, level: Math.max(s0.level || 1, n + 1) }); } swings = 0; total = 0; swingDmg = 0; state = 'aim'; settleT = 0; timeLeft = 45; grid = new Map();
+      level = n; const site = buildSite(n); siteName = SITE_NAME[site.site]; if (S.fence) S.fence.visible = site.site === 'impound'; { const s0 = api.save.get(); api.save.put({ ...s0, level: Math.max(s0.level || 1, n + 1) }); } swings = 0; total = 0; swingDmg = 0; state = 'aim'; settleT = 0; timeLeft = 45; grid = new Map();
       blocks = site.B.map((b, idx) => { const K = KIND[b.kind]; const o = { ...b, idx, x: b.i * BS + BS / 2, y: b.j * BS + BS / 2, z: b.k * BS + BS / 2, vx: 0, vy: 0, vz: 0, rx: 0, ry: 0, rz: 0, wx: 0, wy: 0, wz: 0, awake: false, gone: false, counted: false, val: K[1], m: K[2], hard: K[3], col: K[0] }; o.x0 = o.x; o.y0 = o.y; o.z0 = o.z; grid.set(key(b.i, b.j, b.k), o); return o; });
       totalValue = blocks.reduce((s, b) => s + b.val, 0);
       if (inst) { scene.remove(inst); inst.geometry.dispose(); inst.material.dispose(); }
@@ -22586,7 +22678,7 @@ Arcade.register({
       const col = new T3.Color(); blocks.forEach((b, i) => { col.set(b.col); if (b.kind === 'glass') col.offsetHSL(0, 0, .05); inst.setColorAt(i, col); }); scene.add(inst); syncAll();
       resetBall(); S.say(SITE_NAME[site.site], mode === 'swing' ? `Target ${target()} damage in 3 swings` : '45 seconds: smash it all'); setTimeout(() => !S.dead && S.say(''), 1600);
     }
-    const target = () => Math.round(totalValue * Math.min(.75, .35 + level * .03));
+    const target = () => Math.round(totalValue * Math.min(.85, .55 + level * .03));
     function syncOne(b, i) { const T = T3; const q = new T.Quaternion().setFromEuler(new T.Euler(b.rx, b.ry, b.rz)); const m = new T.Matrix4().compose(new T.Vector3(b.x, b.gone ? -50 : b.y, b.z), q, new T.Vector3(1, 1, 1)); inst.setMatrixAt(i, m); }
     function syncAll() { blocks.forEach(syncOne); inst.instanceMatrix.needsUpdate = true; if (inst.instanceColor) inst.instanceColor.needsUpdate = true; }
     function wake(b, vx, vy, vz) {
@@ -22652,11 +22744,11 @@ Arcade.register({
       if (!drag) return; const d = drag; drag = null; if (state !== 'pull') return;
       const a = d.hist[0], z = d.hist[d.hist.length - 1], dt = Math.max(16, z.t - a.t) / 1000;
       const fx = (z.x - a.x) / S.W / dt, fy = (z.y - a.y) / S.H / dt;            // flick, in screens per second
-      ball.vx = clamp(fx * 6, -14, 14); ball.vz = clamp(fy * 9, -18, 18) * (fy < 0 ? 1 : .2); ball.vy = 0;
+      ball.vx = clamp(fx * 6, -12, 12); ball.vz = clamp(fy * 6, -12, 12); ball.vy = 0;   // fast enough to smash, low enough to stay at building height
       state = 'swing'; settleT = 0; swingDmg = 0; swings++; api.tone(120, { type: 'triangle', dur: .5, vol: .06, slide: 1.6 }); api.haptic(20);
     };
     function pullPose() {
-      const ax = clamp((drag.x - drag.x0) / S.W * 12, -6, 6), az = clamp((drag.y - drag.y0) / S.H * 14, -2, 8);   // pull back toward the camera, sideways to aim
+      const ax = clamp((drag.x - drag.x0) / S.W * 16, -8.5, 8.5), az = clamp((drag.y - drag.y0) / S.H * 16, -8.5, 6);   // the ball follows your finger: sideways and toward/away from you
       const dx = ax, dz = az, h = Math.sqrt(Math.max(.5, LEN * LEN - dx * dx - dz * dz));
       ball.x = PIV.x + dx; ball.z = PIV.z + dz; ball.y = PIV.y - h; ball.vx = ball.vy = ball.vz = 0;
     }
@@ -22676,16 +22768,16 @@ Arcade.register({
       scene.background = new T.Color(0x9ad0ff); scene.fog = new T.Fog(0x9ad0ff, 30, 80);
       scene.add(new T.HemisphereLight(0xffffff, 0x445533, .7)); const sun = new T.DirectionalLight(0xffffff, .9); sun.position.set(-10, 20, 12); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -15, right: 15, top: 15, bottom: -5 }); scene.add(sun);
       const ground = new T.Mesh(new T.PlaneGeometry(120, 120), new T.MeshStandardMaterial({ color: 0x6a8a4a, roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
-      const lot = new T.Mesh(new T.PlaneGeometry(24, 14), new T.MeshStandardMaterial({ color: 0x8a8a84, roughness: .95 })); lot.rotation.x = -Math.PI / 2; lot.position.set(0, .01, 1); lot.receiveShadow = true; scene.add(lot);
+      S.fence = new T.Group(); for (let k = -1; k <= 1; k += 2) { const fz = new T.Mesh(new T.PlaneGeometry(28, 3), new T.MeshStandardMaterial({ color: 0x9aa3ad, transparent: true, opacity: .35, side: T.DoubleSide, wireframe: true })); fz.position.set(0, 1.5, -12 + (k + 1) * 0); fz.position.set(k * 13, 1.5, -5); fz.rotation.y = Math.PI / 2; S.fence.add(fz); } const back = new T.Mesh(new T.PlaneGeometry(26, 3), new T.MeshStandardMaterial({ color: 0x9aa3ad, transparent: true, opacity: .35, wireframe: true })); back.position.set(0, 1.5, -12); S.fence.add(back); scene.add(S.fence);
+      const lot = new T.Mesh(new T.PlaneGeometry(30, 22), new T.MeshStandardMaterial({ color: 0x8a8a84, roughness: .95 })); lot.rotation.x = -Math.PI / 2; lot.position.set(0, .01, 1); lot.receiveShadow = true; scene.add(lot);
       for (let k = 0; k < 10; k++) { const bh = 6 + (k * 7) % 12, bld = new T.Mesh(new T.BoxGeometry(5, bh, 5), new T.MeshStandardMaterial({ color: [0xb8a088, 0x9aa8b8, 0xc8b098, 0xa0b0a0][k % 4] })); bld.position.set(-40 + k * 9, bh / 2, -40 - (k % 3) * 4); scene.add(bld); }
       // the crane: a tower, a yellow jib out over the site, and the chain
       crane = new T.Group(); const yel = new T.MeshStandardMaterial({ color: 0xffb627, roughness: .5 });
-      const mast = new T.Mesh(new T.BoxGeometry(.6, PIV.y + 1, .6), yel); mast.position.set(-9, (PIV.y + 1) / 2, PIV.z); crane.add(mast);
-      const jib = new T.Mesh(new T.BoxGeometry(11, .5, .5), yel); jib.position.set(-4, PIV.y + .5, PIV.z); crane.add(jib);
-      const cab = new T.Mesh(new T.BoxGeometry(1.6, 1.4, 1.4), new T.MeshStandardMaterial({ color: 0xff4a57 })); cab.position.set(-9, 1, PIV.z); crane.add(cab); scene.add(crane);
+      const mast = new T.Mesh(new T.BoxGeometry(.7, PIV.y + 1, .7), yel); mast.position.set(0, (PIV.y + 1) / 2, -14); crane.add(mast);
+      const jib = new T.Mesh(new T.BoxGeometry(.5, .5, 16), yel); jib.position.set(0, PIV.y + .5, -7); crane.add(jib); const cw = new T.Mesh(new T.BoxGeometry(2, 1.5, 2), new T.MeshStandardMaterial({ color: 0x5c6575 })); cw.position.set(0, PIV.y + .2, -16.5); crane.add(cw);
+      const cab = new T.Mesh(new T.BoxGeometry(1.6, 1.4, 1.4), new T.MeshStandardMaterial({ color: 0xff4a57 })); cab.position.set(0, PIV.y - 1.2, -13.6); crane.add(cab); scene.add(crane);
       chainM = new T.Mesh(new T.CylinderGeometry(.05, .05, 1, 6), new T.MeshStandardMaterial({ color: 0x5c6575, metalness: .6 })); scene.add(chainM);
       ballM = new T.Mesh(new T.SphereGeometry(1, 28, 20), new T.MeshStandardMaterial({ color: MATS[up.mat][2], metalness: .7, roughness: .35 })); ballM.castShadow = true; scene.add(ballM); styleBall();
-      cam.position.set(7, 7, 19); cam.lookAt(0, 3.5, 0);
       S.say(''); load(Math.max(0, (api.save.get().level || 1) - 1)); S.loop(step);
     }
     function step(dt) {
@@ -22699,9 +22791,10 @@ Arcade.register({
       blocks.forEach((b, i) => { if (b.awake || b.gone) syncOne(b, i); }); inst.instanceMatrix.needsUpdate = true;
       ballM.position.set(ball.x, ball.y, ball.z); ballM.rotation.y += ball.vx * dt * .3;
       const mx = (PIV.x + ball.x) / 2, my = (PIV.y + ball.y) / 2, mz = (PIV.z + ball.z) / 2; chainM.position.set(mx, my, mz); chainM.scale.set(1, LEN, 1); chainM.lookAt(PIV.x, PIV.y, PIV.z); chainM.rotateX(Math.PI / 2);
-      cam.position.set(7 + (shake > 0 ? rnd(-shake, shake) : 0), 7 + (shake > 0 ? rnd(-shake, shake) : 0), 19); cam.lookAt(0, 3.5, 0); if (shake > 0) shake = Math.max(0, shake - dt);
+      { const vf = cam.fov * Math.PI / 360, hf = Math.atan(Math.tan(vf) * cam.aspect), d = Math.max(17, 8.6 / Math.tan(hf), 11 / Math.tan(vf)), sh = shake > 0 ? rnd(-shake, shake) : 0;   // fit ±11 m sideways on any screen
+        cam.position.set(sh, d * .62 + sh, d * .78 + 1); cam.lookAt(0, 2, -3.5); if (shake > 0) shake = Math.max(0, shake - dt); }
       S.renderer.render(scene, cam);
-      S.set('Site', `${level + 1} · ${siteName}`); S.set('Swing', mode === 'timed' ? `${Math.ceil(timeLeft)} s` : `${Math.min(3, swings + (state === 'aim' ? 1 : 0))}/3`); S.set('Damage', total); S.set('Target', mode === 'timed' ? '∞' : target());
+      S.set('Site', level + 1); S.set('Swing', mode === 'timed' ? `${Math.ceil(timeLeft)} s` : `${Math.min(3, swings + (state === 'aim' ? 1 : 0))}/3`); S.set('Damage', total); S.set('Target', mode === 'timed' ? '∞' : target());
     }
     init();
     window.__wb = { get ball() { return ball; }, get blocks() { return blocks; }, get state() { return state; }, get ballM() { return ballM; } };
@@ -23314,7 +23407,7 @@ Arcade.register({
   id: 'strikelane', title: 'Strike Lane',
   blurb: '3D bowling with real pin action in a neon alley. Slide to line up, then flick: longer, faster flicks bowl harder; curve it to hook. Ten-frame scoring.',
   goal: 'Knock down all ten pins: a strike on the first ball, a spare with two. Ten frames, highest score wins.',
-  controls: 'Slide your finger (or mouse) sideways to move the ball along the line, then flick UP and let go. Flick length and speed = power, the angle = direction, a curved flick = hook. Mouse: hold, drag up, release.',
+  controls: 'Slide sideways to line up. Then swing like a real bowler: pull DOWN (backswing = power) and swing back UP: the ball rolls as your finger passes where it started. Angle your up-swing to aim; curve it to hook.',
   stat: s => s.best ? `High game ${s.best}` : '',
   icon: icon('#3a2a1a', '#0b0e12', c => {
     c.fillStyle = '#c9a27a'; c.beginPath(); c.moveTo(110, 200); c.lineTo(135, 20); c.lineTo(155, 20); c.lineTo(180, 200); c.fill();
@@ -23378,26 +23471,35 @@ Arcade.register({
     // swipe: start anywhere in the lower half; the ball slides with your finger sideways, then goes on release
     // 1) slide: while the finger moves mostly sideways, the ball follows it along the foul line
     // 2) flick: once it heads up the screen, the throw starts from there; on release, length + speed = power
-    S.onDown = (x, y) => { if (state !== 'aim') return; swipe = { pts: [{ x, y, t: performance.now() }], x0: x, bx0: ball.x, mode: 'slide', flick: null }; };
-    S.onMove = (x, y) => {
-      if (!swipe) return; const now = performance.now(), last = swipe.pts[swipe.pts.length - 1];
-      if (swipe.mode === 'slide') {
-        ball.x = clamp(swipe.bx0 + (x - swipe.x0) / S.W * LW * 1.3, -LW / 2 + BR, LW / 2 - BR);
-        if (last.y - y > 4 && (swipe.pts[0].y - y) > 22) { swipe.mode = 'flick'; swipe.flick = [{ x: last.x, y: last.y, t: last.t }]; }
-        swipe.pts.push({ x, y, t: now }); return;
-      }
-      swipe.flick.push({ x, y, t: now }); swipe.pts.push({ x, y, t: now });
-      const a = swipe.flick[0], dy = a.y - y, dx = x - a.x; if (S.aimM) { const pw = clamp(dy / (S.H * .45), 0, 1); S.aimM.visible = dy > 10; S.aimM.scale.y = .6 + pw * 3.2; S.aimM.position.set(ball.x + clamp(dx / Math.max(40, dy), -.25, .25) * (.3 + pw * 1.6), .012, ball.z + .3 + pw * 1.6); S.aimM.rotation.z = -clamp(dx / Math.max(40, dy), -.25, .25); S.aimM.material.color.setHSL(.25 - pw * .25, 1, .55); }
-    };
-    S.onUp = (x, y) => {
-      if (S.aimM) S.aimM.visible = false;
-      if (!swipe || state !== 'aim' || swipe.mode !== 'flick') { swipe = null; return; } const P = swipe.flick, a = P[0], b = P[P.length - 1]; swipe = null;
-      const dy = a.y - b.y, dx = b.x - a.x, dtm = Math.max(50, (b.t - a.t)); if (dy < 30) return;
-      const lenK = clamp(dy / (S.H * .45), 0, 1), velK = clamp(dy / dtm / 2.2, 0, 1), speed = clamp(3.5 + lenK * 4.5 + velK * 2.5, 3.5, 10.5), dir = clamp(dx / dy, -.25, .25);
-      // curvature: how far the middle of the swipe bowed away from the straight line
-      const m = P[Math.floor(P.length / 2)] || a, lx = a.x + (b.x - a.x) * .5, bow = clamp((m.x - lx) / Math.max(40, dy) * 4, -1, 1);
+    /* A real bowling swing: slide sideways to line up, pull DOWN (the backswing: the longer, the more power is stored), then
+       swing UP through your starting point: the ball leaves your hand as you pass it, with the speed of that up-swing.
+       Its sideways drift on the way up aims it; a curve in the up-swing puts hook on it. Lifting the finger before the
+       up-swing cancels. */
+    const bowl = (b) => {
+      const P = b.up, a = P[0], z = P[P.length - 1], dy = a.y - z.y, dx = z.x - a.x, dtm = Math.max(40, z.t - a.t);
+      const backK = clamp(b.back / (S.H * .35), 0, 1), velK = clamp(dy / dtm / 1.8, 0, 1), speed = clamp(3.5 + backK * 4 + velK * 3, 3.5, 10.5), dir = clamp(dx / Math.max(30, dy), -.25, .25);
+      const m = P[Math.floor(P.length / 2)] || a, lx = a.x + (z.x - a.x) * .5, bow = clamp((m.x - lx) / Math.max(40, dy) * 4, -1, 1);
       ball.vz = speed; ball.vx = dir * speed; ball.spin = -bow * 2.6; ball.rolling = true; state = 'roll'; api.tone(120, { type: 'triangle', dur: .6, vol: .05, slide: 1.2 }); api.haptic(15);
-      if (lucky) { lucky = false; ball.lucky = true; }
+      if (lucky) { lucky = false; ball.lucky = true; } if (S.aimM) S.aimM.visible = false; swipe = null;
+    };
+    S.onDown = (x, y) => { if (state !== 'aim') return; swipe = { x0: x, y0: y, bx0: ball.x, mode: 'slide', back: 0, low: y, up: null }; };
+    S.onMove = (x, y) => {
+      if (!swipe || state !== 'aim') return; const now = performance.now();
+      if (swipe.mode === 'slide') { ball.x = clamp(swipe.bx0 + (x - swipe.x0) / S.W * LW * 1.3, -LW / 2 + BR, LW / 2 - BR); if (y - swipe.y0 > 18) { swipe.mode = 'back'; swipe.yRel = swipe.y0; } return; }
+      if (swipe.mode === 'back') {
+        if (y > swipe.low) swipe.low = y; swipe.back = swipe.low - swipe.yRel;
+        if (swipe.low - y > 12) { swipe.mode = 'swing'; swipe.up = [{ x, y, t: now }]; }
+        if (S.aimM) { const pw = clamp(swipe.back / (S.H * .35), 0, 1); S.aimM.visible = true; S.aimM.scale.y = .6 + pw * 3.2; S.aimM.position.set(ball.x, .012, ball.z + .3 + pw * 1.6); S.aimM.rotation.z = 0; S.aimM.material.color.setHSL(.25 - pw * .25, 1, .55); }
+        return;
+      }
+      swipe.up.push({ x, y, t: now });
+      const a = swipe.up[0], dy = a.y - y, dx = x - a.x; if (S.aimM) S.aimM.rotation.z = -clamp(dx / Math.max(30, dy), -.25, .25);
+      if (y <= swipe.yRel) bowl(swipe);   // released as the hand swings past the start point
+    };
+    S.onUp = () => {
+      if (!swipe || state !== 'aim') { swipe = null; if (S.aimM) S.aimM.visible = false; return; }
+      if (swipe.mode === 'swing' && swipe.up.length > 1 && swipe.up[0].y - swipe.up[swipe.up.length - 1].y > 25) bowl(swipe);
+      else { swipe = null; if (S.aimM) S.aimM.visible = false; }
     };
     function collide(a, ra, ma, b, rb, mb) {
       const dx = b.x - a.x, dz = b.z - a.z, d = Math.hypot(dx, dz), R = ra + rb; if (d >= R || d < 1e-6) return 0;
