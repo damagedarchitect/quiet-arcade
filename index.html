@@ -5404,13 +5404,13 @@ return {
 const { stage, clamp, icon } = QAKit;
 const N = 96, SIZE = 10, CELL = SIZE / (N - 1);       // grid points per side, tray size (world units)
 const COLORS = [['Sand', '#e2c08a'], ['Pink', '#ff9de0'], ['Mint', '#7ee8c0'], ['Sky', '#7ec8ff'], ['Lilac', '#b8a0ff'], ['Lemon', '#ffe27a'], ['Coral', '#ff8a6a'], ['Clay red', '#c0583a'], ['Night', '#3a3f6a']];
-const VISC = [['Runny', 1.05, .35], ['Kinetic', 1.45, .12], ['Stiff', 1.9, .05], ['Clay', 3.2, .008]];   // name, max stable slope (rise/run), slump rate
-const TOOLS = [['thumb', '👍', 'Thumb'], ['smear', '👉', 'Smear'], ['cut', '🔪', 'Cut'], ['pinch', '🤏', 'Pinch'], ['flat', '▬', 'Flatten'], ['pour', '⏬', 'Pour'], ['stamp', '★', 'Stamp']];
+const VISC = [['Runny', 1.1, .14], ['Kinetic', 2.6, .02], ['Stiff', 3.6, .008], ['Clay', 6, .002]];   // kinetic sand stands up in moulded towers and only slowly sags   // name, max stable slope (rise/run), slump rate
+const TOOLS = [['thumb', '👍', 'Thumb'], ['smear', '👉', 'Smear'], ['cut', '🔪', 'Cut'], ['pinch', '🤏', 'Pinch'], ['flat', '▬', 'Flatten'], ['pour', '⏬', 'Pour'], ['stamp', '★', 'Stamp'], ['cup', '🥤', 'Cup mould'], ['view', '🔄', 'Turn view']];
 Arcade.register({
   id: 'kineticsand', title: 'Kinetic Sand',
   blurb: 'A 3D tray of squishy kinetic sand and clay. Press, smear, cut, pinch and stamp it, pick colours and how stiff it is. It holds its shape like the real thing.',
   goal: 'No goal, no clock: shape the sand. Cut it into slices, press thumb dents, smear colours together, build towers and stamp shapes.',
-  controls: 'Pick a tool along the bottom, then drag on the tray. Colour and stiffness buttons are above it. ⟲ ⟳ turn the tray, Reset smooths it out.',
+  controls: 'Pick a tool, then drag on the tray. 🥤 Cup mould turns out a sand tower where you tap. Turn the view freely with 🔄 (drag) or two fingers anywhere; ⟲ ⟳ also turn it.',
   stat: s => s.shapes ? `${s.shapes} sculpting sessions` : '',
   icon: icon('#f2e2c8', '#d8c0a0', c => {
     c.fillStyle = '#c8a878'; c.beginPath(); c.ellipse(145, 130, 130, 50, 0, 0, 7); c.fill();
@@ -5424,9 +5424,9 @@ Arcade.register({
     const bar = document.createElement('div'); bar.style.cssText = 'display:flex;flex-direction:column;gap:6px;padding-top:8px;flex:none';
     bar.innerHTML = `<div id="ksC" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;align-items:center"></div><div id="ksT" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none"></div>`;
     root.append(bar);
-    let T3, scene, cam, mesh, geo, H = new Float32Array(N * N), Cl = new Float32Array(N * N * 3), tool = 'thumb', colI = 0, viscI = 1, yaw = 0, drag = null, dirty = true, stampI = 0;
+    let PK = new Float32Array(N * N), T3, scene, cam, mesh, geo, H = new Float32Array(N * N), Cl = new Float32Array(N * N * 3), tool = 'thumb', colI = 0, viscI = 1, yaw = 0, pitch = .9, pinch2 = null, drag = null, dirty = true, stampI = 0;
     const idx = (i, j) => j * N + i;
-    function fresh(keepColor) {
+    function fresh(keepColor) { PK.fill(0);
       for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const x = i / (N - 1) - .5, y = j / (N - 1) - .5, r = Math.hypot(x, y); H[idx(i, j)] = Math.max(0, .9 - r * .6) + Math.random() * .01; }
       if (!keepColor) paintAll(COLORS[colI][1]); dirty = true;
     }
@@ -5448,6 +5448,7 @@ Arcade.register({
     function tint(k, hex, a) { const c = new T3.Color(hex); Cl[k * 3] += (c.r - Cl[k * 3]) * a; Cl[k * 3 + 1] += (c.g - Cl[k * 3 + 1]) * a; Cl[k * 3 + 2] += (c.b - Cl[k * 3 + 2]) * a; }
     function apply(ci, cj, dx, dj, first) {
       const col = COLORS[colI][1], stiff = VISC[viscI][1];
+      if (tool !== 'cup') each(ci, cj, 8, (i, j) => { PK[idx(i, j)] = 0; });   // touching packed sand loosens it
       if (tool === 'thumb') { // press a dent; the volume goes to a raised rim
         if (!first) return; let moved = 0; const R = 6; each(ci, cj, R, (i, j, t) => { const k = idx(i, j), dent = .45 * Math.cos(t * Math.PI / 2) ** 2, take = Math.min(H[k], dent); H[k] -= take; moved += take; });
         let rim = 0; each(ci, cj, R * 1.6, (i, j, t) => { if (t > .62) rim++; }); each(ci, cj, R * 1.6, (i, j, t) => { if (t > .62) H[idx(i, j)] += moved / rim; });
@@ -5458,13 +5459,20 @@ Arcade.register({
       } else if (tool === 'cut') { // a knife: a narrow groove, the sand heaped up to both sides
         const L = Math.hypot(dx, dj) || 1, nx = -dj / L, ny = dx / L; let moved = 0;
         each(ci, cj, 1.6, (i, j, t) => { const k = idx(i, j), take = H[k] * .85 * (1 - t * .5); H[k] -= take; moved += take; });
-        for (const s of [-1, 1]) for (let d = 2; d <= 4; d++) { const i = clamp(Math.round(ci + nx * s * d), 0, N - 1), j = clamp(Math.round(cj + ny * s * d), 0, N - 1); H[idx(i, j)] += moved / 6; }
+        let wsum = 0; const band = []; for (const s of [-1, 1]) each(Math.round(ci + nx * s * 3.2), Math.round(cj + ny * s * 3.2), 2.6, (i, j, t) => { const w = Math.cos(t * Math.PI / 2) ** 2; band.push([idx(i, j), w]); wsum += w; });
+        for (const [k, w] of band) H[k] += moved * w / (wsum || 1);
         if (Math.random() < .3) api.noise(.04, .03, 2200);
       } else if (tool === 'pinch') { // gather a little material from around and pull it up in the middle
         let got = 0; each(ci, cj, 7, (i, j, t) => { if (t > .4) { const k = idx(i, j), take = H[k] * .03; H[k] -= take; got += take; } }); each(ci, cj, 3, (i, j, t) => { H[idx(i, j)] += got * (1 - t) / 14; });
       } else if (tool === 'flat') { // scraper: everything in the brush moves toward the brush's mean height
         let sum = 0, n = 0; each(ci, cj, 5, (i, j) => { sum += H[idx(i, j)]; n++; }); const m = sum / n; each(ci, cj, 5, (i, j, t) => { const k = idx(i, j); H[k] += (m - H[k]) * .35 * (1 - t * .5); });
       } else if (tool === 'pour') { each(ci, cj, 6, (i, j, t) => { const k = idx(i, j); H[k] += .05 * (1 - t); tint(k, col, .25 * (1 - t)); }); }
+      else if (tool === 'cup') { // the toy cup: packed sand turned out upside down into a little tower, scooped from around it
+        if (!first) return; const R2 = 5.5, hgt = 2.4, ridges = 10; let took = 0;
+        each(ci, cj, R2 * 2.2, (i, j, t) => { if (t > .5) { const k = idx(i, j), take = H[k] * .12; H[k] -= take; took += take; } });
+        each(ci, cj, R2, (i, j, t) => { const k = idx(i, j), a = Math.atan2(j - cj, i - ci), rim = 1 + .06 * Math.cos(a * ridges), inside = t / rim; if (inside > 1) return; const top = hgt * (1 - Math.max(0, inside - .78) * 2.2) + (1 - inside) * .06; if (H[k] < top) H[k] = top; PK[k] = 1; tint(k, col, .85); });
+        api.tone(180, { type: 'sine', dur: .2, vol: .07, slide: .6 }); api.haptic(15); dirty = true; return;
+      }
       else if (tool === 'stamp') { if (!first) return; const shape = (x, y) => { const a = Math.atan2(y, x), r = Math.hypot(x, y); if (stampI === 0) return r < 6 * (.55 + .45 * Math.abs(Math.cos(a * 2.5))); if (stampI === 1) { const X = x / 6, Y = -y / 6 + .3; return (X * X + Y * Y - .5) ** 3 - X * X * Y ** 3 < 0; } if (stampI === 2) return r < 6 && r > 4; return r < 6 && Math.cos(a * 8) > -.2; };
         let moved = 0, cnt = 0; each(ci, cj, 8, (i, j) => { if (shape(i - ci, j - cj)) { const k = idx(i, j), take = Math.min(H[k], .35); H[k] -= take; moved += take; tint(k, col, .6); } else cnt++; }); each(ci, cj, 8, (i, j) => { if (!shape(i - ci, j - cj)) H[idx(i, j)] += moved / Math.max(1, cnt); }); api.tone(220, { dur: .1, vol: .05 }); }
       // colour the touched sand with the current colour a little (not for smear/stamp which paint their own way)
@@ -5473,10 +5481,11 @@ Arcade.register({
     }
     // ---- slump: only slopes steeper than the material's angle of repose flow, slowly (kinetic sand holds walls) ----
     function slump() {
+      for (let k = 0; k < N * N; k++) if (PK[k]) PK[k] *= .9997;   // packed (moulded) sand holds for about a minute, then slowly sags
       const [, maxSlope, rate] = VISC[viscI], lim = maxSlope * CELL; let any = false;
       for (let pass = 0; pass < 2; pass++) for (let j = 1; j < N - 1; j++) for (let i = 1; i < N - 1; i++) {
         const k = idx(i, j), h = H[k];
-        for (const k2 of [k + 1, k + N]) { const d = h - H[k2]; if (Math.abs(d) > lim) { const m = (Math.abs(d) - lim) * rate * .5 * Math.sign(d); H[k] -= m; H[k2] += m; any = true; } }
+        for (const k2 of [k + 1, k + N]) { if (PK[k] > .5 || PK[k2] > .5) continue; const d = h - H[k2]; if (Math.abs(d) > lim) { const m = (Math.abs(d) - lim) * rate * .5 * Math.sign(d); H[k] -= m; H[k2] += m; any = true; } }
       }
       if (any) dirty = true;
     }
@@ -5499,8 +5508,12 @@ Arcade.register({
       if (!p) { const pl = new T.Plane(new T.Vector3(0, 1, 0), -.5), v = new T.Vector3(); if (!ray.rc.ray.intersectPlane(pl, v)) return null; p = v; }
       const ci = (p.x + SIZE / 2) / CELL, cj = (p.z + SIZE / 2) / CELL; if (ci < -2 || cj < -2 || ci > N + 1 || cj > N + 1) return null; return [clamp(Math.round(ci), 0, N - 1), clamp(Math.round(cj), 0, N - 1)];
     }
-    S.onDown = (x, y) => { if (!mesh) return; const c = hitGrid(x, y); if (!c) return; drag = { c }; apply(c[0], c[1], 0, 0, true); };
-    S.onMove = (x, y) => { if (!drag || !S.ptr.down) return; const c = hitGrid(x, y); if (!c) return; const [pi, pj] = drag.c, d = Math.hypot(c[0] - pi, c[1] - pj); const steps = Math.max(1, Math.ceil(d / 1.5)); for (let s = 1; s <= steps; s++) apply(Math.round(pi + (c[0] - pi) * s / steps), Math.round(pj + (c[1] - pj) * s / steps), (c[0] - pi) / steps, (c[1] - pj) / steps, false); drag.c = c; };
+    const touches = new Map();
+    S.cv.addEventListener('pointerdown', e => { touches.set(e.pointerId, [e.clientX, e.clientY]); if (touches.size === 2) { drag = null; const [a, b] = [...touches.values()]; pinch2 = { cx: (a[0] + b[0]) / 2, cy: (a[1] + b[1]) / 2 }; } });
+    S.cv.addEventListener('pointermove', e => { if (!touches.has(e.pointerId)) return; touches.set(e.pointerId, [e.clientX, e.clientY]); if (touches.size === 2 && pinch2) { const [a, b] = [...touches.values()], cx = (a[0] + b[0]) / 2, cy = (a[1] + b[1]) / 2; yaw -= (cx - pinch2.cx) / S.W * 4; pitch = clamp(pitch + (cy - pinch2.cy) / S.H * 2.5, .25, 1.45); pinch2.cx = cx; pinch2.cy = cy; } });
+    const tEnd = e => { touches.delete(e.pointerId); if (touches.size < 2) pinch2 = null; }; S.cv.addEventListener('pointerup', tEnd); S.cv.addEventListener('pointercancel', tEnd);
+    S.onDown = (x, y) => { if (!mesh || touches.size > 1) return; if (tool === 'view') { drag = { view: true, x, y }; return; } const c = hitGrid(x, y); if (!c) return; drag = { c }; apply(c[0], c[1], 0, 0, true); };
+    S.onMove = (x, y) => { if (!drag || !S.ptr.down || pinch2) return; if (drag.view) { yaw -= (x - drag.x) / S.W * 4; pitch = clamp(pitch + (y - drag.y) / S.H * 2.5, .25, 1.45); drag.x = x; drag.y = y; return; } const c = hitGrid(x, y); if (!c) return; const [pi, pj] = drag.c, d = Math.hypot(c[0] - pi, c[1] - pj); const steps = Math.max(1, Math.ceil(d / 1.5)); for (let s = 1; s <= steps; s++) apply(Math.round(pi + (c[0] - pi) * s / steps), Math.round(pj + (c[1] - pj) * s / steps), (c[0] - pi) / steps, (c[1] - pj) / steps, false); drag.c = c; };
     S.onUp = () => { drag = null; };
     let slumpT = 0;
     function step(dt) {
@@ -5511,7 +5524,7 @@ Arcade.register({
         for (let k = 0; k < N * N; k++) { pos.setY(k, H[k]); const shade = .9 + Math.min(.12, H[k] * .05); col.setXYZ(k, Cl[k * 3] * shade, Cl[k * 3 + 1] * shade, Cl[k * 3 + 2] * shade); }
         pos.needsUpdate = true; col.needsUpdate = true; geo.computeVertexNormals();
       }
-      { const vf = cam.fov * Math.PI / 360, hf = Math.atan(Math.tan(vf) * cam.aspect), d = Math.max(14, 7 / Math.tan(hf), 6.5 / Math.tan(vf)); cam.position.set(Math.sin(yaw) * d * .62, d * .78, Math.cos(yaw) * d * .62); cam.lookAt(0, 0, 0); }   // the whole tray fits any screen shape
+      { const vf = cam.fov * Math.PI / 360, hf = Math.atan(Math.tan(vf) * cam.aspect), d = Math.max(14, 7 / Math.tan(hf), 6.5 / Math.tan(vf)); cam.position.set(Math.sin(yaw) * Math.cos(pitch) * d, Math.sin(pitch) * d, Math.cos(yaw) * Math.cos(pitch) * d); cam.lookAt(0, 0, 0); }   // the whole tray fits any screen shape
       S.renderer.render(scene, cam);
     }
     init();
