@@ -1,4 +1,4 @@
-const C='qa-d12b6667c2',F=['index.html','manifest.webmanifest','favicon.png','icon-192.png','icon-512.png','icon-180.png','icon-maskable.png','sc-surprise.png','sc-continue.png','sc-quests.png'];
+const C='qa-2ff7c2860c',F=['index.html','manifest.webmanifest','favicon.png','icon-192.png','icon-512.png','icon-180.png','icon-maskable.png','sc-surprise.png','sc-continue.png','sc-quests.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.add(F[0]).then(()=>Promise.all(F.slice(1).map(u=>c.add(u).catch(()=>{}))))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(n=>n!==C).map(n=>caches.delete(n)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{const r=e.request;if(r.method!=='GET')return;const nav=r.mode==='navigate';

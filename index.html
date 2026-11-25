@@ -644,11 +644,12 @@ window.Arcade = (() => {
       o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + .05);
     } catch {}
   }
+  const noiseBufs = new Map();   // one decaying-noise buffer per length, reused instead of rebuilt on every bang
   function noise(dur = .12, vol = .12, freq = 1200) {
     const a = actx; if (!a || !settings().sound) return;
     try {
-      const len = Math.floor(a.sampleRate * dur), buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
-      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2);
+      const len = Math.floor(a.sampleRate * dur); let buf = noiseBufs.get(len);
+      if (!buf) { buf = a.createBuffer(1, len, a.sampleRate); const d = buf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2); if (noiseBufs.size < 40) noiseBufs.set(len, buf); }
       const src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
       src.buffer = buf; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = .7; g.gain.value = vol; src.connect(f).connect(g).connect(a.destination); src.start();
     } catch {}
@@ -23650,9 +23651,9 @@ Arcade.register({
     /* ---------- draw ---------- */
     const lo = document.createElement('canvas'), lg = lo.getContext('2d');
     function draw() {
-      const W = S.W, H = S.H, JY = jy(), retro = secOf(jetRow() + 10) === retroSec || secOf(scroll / RW) === retroSec;
+      const W = S.W, H = S.H, JY = jy(), retro = retroSec >= 0 && (secOf(jetRow() + 10) === retroSec || secOf(Math.max(0, scroll) / RW) === retroSec);
       let g = g0, scale = 1;
-      if (retro) { scale = .25; lo.width = Math.ceil(W * scale); lo.height = Math.ceil(H * scale); g = lg; g.setTransform(scale, 0, 0, scale, 0, 0); }
+      if (retro) { scale = .25; const lw = Math.ceil(W * scale), lh = Math.ceil(H * scale); if (lo.width !== lw || lo.height !== lh) { lo.width = lw; lo.height = lh; } g = lg; g.setTransform(scale, 0, 0, scale, 0, 0); g.globalAlpha = 1; g.shadowBlur = 0; }
       const P = retro ? { land: '#6c9a2e', land2: '#4e7a1e', water: '#2c3fb8', bank: '#6c9a2e', road: '#5a5a5a', jet: '#e8d84a' } : { land: '#1f5a2a', land2: '#2f7a3a', water: '#2a6aa8', bank: '#c9b27a', road: '#4a4f58', jet: '#ffd23f' };
       const sy = wy => H - (wy - scroll);
       g.fillStyle = P.land; g.fillRect(0, 0, W, H);
